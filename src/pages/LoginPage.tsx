@@ -10,7 +10,8 @@ export function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    // debugger;
     // フォーム送信時の画面リロードを防止
     e.preventDefault();
 
@@ -54,10 +55,13 @@ export function LoginPage() {
           />
           <Button
             type="submit"
+            color="primary"
             variant="contained"
             fullWidth
             sx={{ mt: 2 }}
-          ></Button>
+          >
+            ログイン
+          </Button>
         </Box>
 
         {errorMessage && (
