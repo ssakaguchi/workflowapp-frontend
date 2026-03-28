@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { LoginPage } from "./pages/LoginPage";
 import { HomePage } from "./pages/HomePage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import Header from "./components/layout/Header";
 
 //　ルーティングの設定を行うAppコンポーネント
 function App() {
@@ -13,6 +14,7 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
+              <Header />
               <HomePage />
             </ProtectedRoute>
           }
