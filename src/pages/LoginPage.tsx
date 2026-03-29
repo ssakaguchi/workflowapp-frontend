@@ -1,8 +1,15 @@
-import { Box, Button, Container, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Link,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { authApi } from "../api/authApi";
 import { tokenStorage } from "../utils/tokenStorage";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 export function LoginPage() {
   const [loginId, setLoginId] = useState("");
@@ -62,6 +69,10 @@ export function LoginPage() {
           >
             ログイン
           </Button>
+
+          <Link component={RouterLink} to="/register" underline="hover">
+            ユーザー登録はこちら
+          </Link>
         </Box>
 
         {errorMessage && (
