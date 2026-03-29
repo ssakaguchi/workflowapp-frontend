@@ -18,3 +18,9 @@ export type MeResponse = {
   loginId: string;
   displayName: string;
 };
+
+export type CurrentUser = {
+  userId: number;
+  loginId: string;
+  displayName: string;
+};

@@ -1,14 +1,14 @@
-import { getToken } from "../../utils/auth";
 import { logout } from "../../utils/logout";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
+import { isAuthenticated } from "../../utils/auth";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
-  const token = getToken();
+  const authenticated = isAuthenticated();
 
   const handleLogout = () => {
     logout();
@@ -24,7 +24,7 @@ const Header: React.FC = () => {
         </Typography>
 
         {/* 右側 */}
-        {token && (
+        {authenticated && (
           <Button color="inherit" onClick={handleLogout}>
             ログアウト
           </Button>

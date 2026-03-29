@@ -14,3 +14,8 @@ export const getToken = (): string | null => {
 export const removeToken = () => {
   localStorage.removeItem(TOKEN_KEY);
 };
+
+// 認証状態を確認する関数
+export const isAuthenticated = (): boolean => {
+  return !!getToken();
+};
