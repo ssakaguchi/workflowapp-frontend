@@ -1,73 +1,103 @@
-# React + TypeScript + Vite
+# WorkflowApp.Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+業務ワークフロー（申請・承認）を想定したフロントエンドアプリケーションです。
+React + TypeScript を用いて開発しており、ASP.NET Core Web API と連携して動作します。
 
-Currently, two official plugins are available:
+現在は、ユーザー登録・ログインなどの認証機能を中心に実装しています。
+今後は、申請・承認フローなどの業務機能を追加予定です。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 作成背景
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+これまでデスクトップアプリケーション中心の開発経験が多かったため、
+Webアプリケーション開発（特にフロントエンド）のスキル習得を目的として作成しています。
 
-## Expanding the ESLint configuration
+本プロジェクトでは、以下の習得を意識しています。
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React + TypeScript によるフロントエンド開発
+- ASP.NET Core Web API との連携
+- 認証を含むWebアプリケーションの基本構成の理解
+- 業務系アプリケーションを想定した設計
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 使用技術
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- React
+- TypeScript
+- Vite
+- Axios
+- React Router
+- CSS
+
+---
+
+## 現在の実装機能
+
+- ユーザー登録画面
+- ログイン画面
+- 入力バリデーション
+- API通信（Axios）
+- JWTを用いた認証処理
+- ログイン状態に応じた画面制御
+
+---
+
+## 今後の実装予定
+
+- 申請作成機能
+- 申請一覧画面
+- 承認・差戻し機能
+- 権限ごとの画面制御
+- エラーハンドリングの改善
+- テストコードの追加
+
+---
+
+## 画面イメージ
+
+※ 今後追加予定
+
+---
+
+## セットアップ手順
+
+### 1. リポジトリをクローン
+
+```bash
+git clone https://github.com/ssakaguchi/workflowapp-frontend.git
+cd WorkflowApp.Frontend
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. パッケージをインストール
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 3. 開発サーバーを起動
+
+```bash
+npm run dev
+```
+
+---
+
+## API連携
+
+本アプリケーションは、[ASP.NET Core Web API](https://github.com/ssakaguchi/WorkflowApp.Api) と連携して動作します。
+
+バックエンドでは以下の機能を実装しています。
+
+- ユーザー登録
+- ログイン
+- JWT認証
+- 認証付きAPI
+
+---
+
+## 補足
+
+本リポジトリは、学習およびポートフォリオ用途で作成しています。
+今後、バックエンドと連携しながら段階的に機能拡張を行っていく予定です。
