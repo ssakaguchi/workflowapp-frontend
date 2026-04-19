@@ -8,6 +8,10 @@ const API_BASE_URL = "http://localhost:5071";
 export const getCurrentUser = async (): Promise<CurrentUser> => {
   const token = getToken();
 
+  if (!token) {
+    throw new Error("TOKEN_NOT_FOUND");
+  }
+
   // トークンが存在しない場合はエラーをスロー
   const response = await axios.get<CurrentUser>(`${API_BASE_URL}/api/auth/me`, {
     headers: {
