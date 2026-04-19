@@ -1,6 +1,8 @@
 import type { ApplicationListItem } from "../types/application";
+import apiClient from "./apiClient";
 
 // アプリケーションの一覧を取得する関数
 export async function getApplications(): Promise<ApplicationListItem[]> {
-  throw new Error("Not implemented");
+  const response = await apiClient.get<ApplicationListItem[]>("/applications");
+  return response.data;
 }
