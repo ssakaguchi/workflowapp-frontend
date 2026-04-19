@@ -1,0 +1,73 @@
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { describe, expect, test, vi } from "vitest";
+import { ApplicationListTable } from "../components/applications/ApplicationListTable";
+import type { ApplicationListItem } from "../types/application";
+import userEvent from "@testing-library/user-event";
+
+// 申請一覧のテーブル表示に関するテスト
+describe("ApplicationListTable", () => {
+  const applications: ApplicationListItem[] = [
+    {
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      createdAt: "2026-01-01T12:00:00Z",
+      updatedAt: "2026-01-02T12:00:00Z",
+    },
+    {
+      id: 2,
+      title: "備品購入申請",
+      content: "新しいパソコン購入",
+      createdAt: "2026-01-03T12:00:00Z",
+      updatedAt: "2026-01-04T12:00:00Z",
+    },
+  ];
+
+  function renderComponent(onDelete?: (id: number) => void) {
+    render(
+      <MemoryRouter>
+        <ApplicationListTable applications={applications} onDelete={onDelete} />
+      </MemoryRouter>,
+    );
+  }
+
+  test("各行に詳細リンク・編集リンク・削除ボタンが表示されること", () => {
+    renderComponent();
+
+    expect(screen.getAllByRole("link", { name: "詳細" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "編集" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "削除" })).toHaveLength(2);
+  });
+
+  test("詳細リンクに正しい遷移先が設定されていること", () => {
+    renderComponent();
+
+    const detailLinks = screen.getAllByRole("link", { name: "詳細" });
+
+    expect(detailLinks[0]).toHaveAttribute("href", "/applications/1");
+    expect(detailLinks[1]).toHaveAttribute("href", "/applications/2");
+  });
+
+  test("編集リンクに正しい遷移先が設定されていること", () => {
+    renderComponent();
+
+    const editLinks = screen.getAllByRole("link", { name: "編集" });
+
+    expect(editLinks[0]).toHaveAttribute("href", "/applications/1/edit");
+    expect(editLinks[1]).toHaveAttribute("href", "/applications/2/edit");
+  });
+
+  test("削除ボタンクリック時に対象IDでonDeleteが呼ばれること", async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn();
+
+    renderComponent(onDelete);
+
+    const deleteButtons = screen.getAllByRole("button", { name: "削除" });
+    await user.click(deleteButtons[0]);
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(onDelete).toHaveBeenCalledWith(1);
+  });
+});
