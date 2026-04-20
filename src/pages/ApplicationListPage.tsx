@@ -24,7 +24,7 @@ export function ApplicationListPage() {
 
   return (
     <div>
-      <h1>申請一覧</h1>
+      <h2>申請一覧</h2>
 
       {isLoading && <p>読み込み中...</p>}
 
