@@ -1,4 +1,4 @@
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
   Button,
   Stack,
@@ -17,6 +17,8 @@ type Props = {
 };
 
 export function ApplicationListTable({ applications, onDelete }: Props) {
+  const navigate = useNavigate();
+
   return (
     <Table>
       <TableHead>
@@ -38,18 +40,19 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
             <TableCell>
               <Stack direction="row" spacing={1}>
                 <Button
-                  component={RouterLink}
-                  to={`/applications/${application.id}`}
                   variant="outlined"
                   size="small"
+                  onClick={() => navigate(`/applications/${application.id}`)}
                 >
                   詳細
                 </Button>
+
                 <Button
-                  component={RouterLink}
-                  to={`/applications/${application.id}/edit`}
                   variant="outlined"
                   size="small"
+                  onClick={() =>
+                    navigate(`/applications/${application.id}/edit`)
+                  }
                 >
                   編集
                 </Button>

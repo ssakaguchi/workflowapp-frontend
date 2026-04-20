@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getApplications } from "../api/applicationsApi";
 import type { ApplicationListItem } from "../types/application";
+import { ApplicationListTable } from "../components/applications/ApplicationListTable";
 
 export function ApplicationListPage() {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
@@ -35,26 +36,7 @@ export function ApplicationListPage() {
       )}
 
       {!isLoading && !errorMessage && applications.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>タイトル</th>
-              <th>作成日時</th>
-              <th>更新日時</th>
-            </tr>
-          </thead>
-          <tbody>
-            {applications.map((application) => (
-              <tr key={application.id}>
-                <td>{application.id}</td>
-                <td>{application.title}</td>
-                <td>{application.createdAt}</td>
-                <td>{application.updatedAt}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ApplicationListTable applications={applications} />
       )}
     </div>
   );
