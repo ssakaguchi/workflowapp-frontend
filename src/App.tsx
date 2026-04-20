@@ -35,6 +35,7 @@ function App() {
         <Route
           path="/"
           element={
+            // ログインしている場合は申請一覧にリダイレクト、していない場合はログインページにリダイレクト
             <ProtectedRoute>
               <Navigate to="/applications" replace />
             </ProtectedRoute>
