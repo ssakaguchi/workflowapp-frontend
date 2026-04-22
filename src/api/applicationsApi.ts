@@ -11,7 +11,7 @@ export async function getApplications(): Promise<ApplicationListItem[]> {
 }
 
 // 申請詳細を取得する関数
-export async function getApplicationDetail(
+export async function getApplicationById(
   id: number,
 ): Promise<ApplicationDetail> {
   const response = await apiClient.get<ApplicationDetail>(

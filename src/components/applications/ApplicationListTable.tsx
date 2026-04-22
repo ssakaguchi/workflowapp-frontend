@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import {
   Button,
   Stack,
@@ -9,6 +8,7 @@ import {
   TableRow,
 } from "@mui/material";
 import type { ApplicationListItem } from "../../types/application";
+import { Link as RouterLink } from "react-router-dom";
 
 // 申請一覧のテーブル表示コンポーネント
 type Props = {
@@ -17,8 +17,6 @@ type Props = {
 };
 
 export function ApplicationListTable({ applications, onDelete }: Props) {
-  const navigate = useNavigate();
-
   return (
     <Table>
       <TableHead>
@@ -42,7 +40,8 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() => navigate(`/applications/${application.id}`)}
+                  component={RouterLink}
+                  to={`/applications/${application.id}`}
                 >
                   詳細
                 </Button>
@@ -50,9 +49,8 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() =>
-                    navigate(`/applications/${application.id}/edit`)
-                  }
+                  component={RouterLink}
+                  to={`/applications/${application.id}/edit`}
                 >
                   編集
                 </Button>

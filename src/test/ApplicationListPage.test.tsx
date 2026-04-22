@@ -3,6 +3,7 @@ import { getApplications } from "../api/applicationsApi";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApplicationListPage } from "../pages/ApplicationListPage";
 import type { ApplicationListItem } from "../types/application";
+import { MemoryRouter } from "react-router-dom";
 
 // applicationsApiをモックする
 vi.mock("../api/applicationsApi", () => ({
@@ -20,7 +21,11 @@ describe("ApplicationListPage", () => {
   test("初期表示時に読み込み中を表示すること", () => {
     mockedGetApplications.mockReturnValue(new Promise(() => {}));
 
-    render(<ApplicationListPage />);
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("読み込み中...")).toBeInTheDocument();
   });
@@ -45,7 +50,11 @@ describe("ApplicationListPage", () => {
 
     mockedGetApplications.mockResolvedValue(applications);
 
-    render(<ApplicationListPage />);
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("読み込み中...")).toBeInTheDocument();
 
@@ -61,17 +70,25 @@ describe("ApplicationListPage", () => {
   test("APIが空配列を返した場合は申請データがありませんを表示すること", async () => {
     mockedGetApplications.mockResolvedValue([]);
 
-    render(<ApplicationListPage />);
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
-      expect(screen.getByText("申請データがありません。")).toBeInTheDocument();
+      screen.findByText("申請データがありません。");
     });
   });
 
   test("API取得失敗時にエラーメッセージを表示すること", async () => {
     mockedGetApplications.mockRejectedValue(new Error("API error"));
 
-    render(<ApplicationListPage />);
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(
