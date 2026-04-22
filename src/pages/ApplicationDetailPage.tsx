@@ -14,7 +14,7 @@ export default function ApplicationDetailPage() {
   useEffect(() => {
     const fetchApplication = async () => {
       if (!id) {
-        setErrorMessage("申請IDが見つかりません");
+        setErrorMessage("申請IDが見つかりません。");
         setIsLoading(false);
         return;
       }

@@ -76,9 +76,9 @@ describe("ApplicationListPage", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      screen.findByText("申請データがありません。");
-    });
+    expect(
+      await screen.findByText("申請データがありません。"),
+    ).toBeInTheDocument();
   });
 
   test("API取得失敗時にエラーメッセージを表示すること", async () => {

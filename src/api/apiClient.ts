@@ -1,9 +1,12 @@
 import axios from "axios";
 import { tokenStorage } from "../utils/tokenStorage";
 
+const apiBaseURL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5071/api";
+
 // APIクライアントを作成
 const apiClient = axios.create({
-  baseURL: "http://localhost:5071/api",
+  baseURL: apiBaseURL,
 });
 
 // リクエストインターセプターを使用して、すべてのリクエストに認証トークンを自動的に追加
