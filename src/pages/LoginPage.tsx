@@ -29,9 +29,9 @@ export function LoginPage() {
       // APIを呼び出してログイン処理を実行
       const result = await authApi.login({ loginId, password });
 
-      // ログイン成功後、JWTを保存してホームページにリダイレクト
+      // ログイン成功後、JWTを保存して申請一覧ページへ遷移
       tokenStorage.set(result.token);
-      navigate("/");
+      navigate("/applications");
     } catch (error) {
       setErrorMessage("ログインに失敗しました。");
     }

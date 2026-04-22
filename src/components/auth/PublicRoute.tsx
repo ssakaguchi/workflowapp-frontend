@@ -8,7 +8,8 @@ type PublicRouteProps = {
 
 const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   if (isAuthenticated()) {
-    return <Navigate to="/dashboard" replace />;
+    // ログインしている場合は申請一覧にリダイレクト
+    return <Navigate to="/applications" replace />;
   }
 
   return children;
