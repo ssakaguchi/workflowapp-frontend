@@ -1,10 +1,11 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { ApplicationDetail } from "../types/application";
 import { useEffect, useState } from "react";
 import { getApplicationById } from "../api/applicationsApi";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [application, setApplication] = useState<ApplicationDetail | null>(
     null,
   );
@@ -43,6 +44,25 @@ export default function ApplicationDetailPage() {
   return (
     <div>
       <h2>申請詳細画面</h2>
+
+      <div style={{ marginBottom: "16px" }}>
+        <button type="button" onClick={() => navigate("/applications")}>
+          一覧へ戻る
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (id) {
+              navigate(`/applications/${id}/edit`);
+            }
+          }}
+          style={{ marginLeft: "8px" }}
+        >
+          編集
+        </button>
+      </div>
+
       {isLoading && <p>読み込み中...</p>}
 
       {!isLoading && errorMessage && <p>{errorMessage}</p>}

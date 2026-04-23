@@ -4,6 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ApplicationDetailPage from "../pages/ApplicationDetailPage";
 import type { ApplicationDetail } from "../types/application";
+import userEvent from "@testing-library/user-event";
 
 vi.mock("../api/applicationsApi", () => ({
   getApplicationById: vi.fn(),
@@ -71,5 +72,57 @@ describe("ApplicationDetailPage", () => {
     await waitFor(() => {
       expect(screen.getByText("申請IDが不正です。")).toBeInTheDocument();
     });
+  });
+
+  test("一覧へ戻るボタンで一覧へ遷移すること", async () => {
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-01-02T00:00:00Z",
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+          <Route path="/applications" element={<div>一覧画面</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("出張申請");
+    await user.click(screen.getByText("一覧へ戻る"));
+
+    expect(screen.getByText("一覧画面")).toBeInTheDocument();
+  });
+
+  test("編集ボタンで編集画面へ遷移すること", async () => {
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-01-02T00:00:00Z",
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+          <Route path="/applications/:id/edit" element={<div>編集画面</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("出張申請");
+    await user.click(screen.getByText("編集"));
+
+    expect(screen.getByText("編集画面")).toBeInTheDocument();
   });
 });
