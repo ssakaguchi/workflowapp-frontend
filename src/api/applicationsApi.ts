@@ -1,6 +1,7 @@
 import type {
   ApplicationDetail,
   ApplicationListItem,
+  UpdateApplicationRequest,
 } from "../types/application";
 import apiClient from "./apiClient";
 
@@ -18,4 +19,12 @@ export async function getApplicationById(
     `/applications/${id}`,
   );
   return response.data;
+}
+
+// 申請を更新する関数
+export async function updateApplication(
+  id: number,
+  request: UpdateApplicationRequest,
+): Promise<void> {
+  await apiClient.put(`/applications/${id}`, request);
 }
