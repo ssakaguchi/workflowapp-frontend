@@ -11,16 +11,14 @@ describe("ApplicationListTable", () => {
     {
       id: 1,
       title: "出張申請",
-      content: "大阪出張",
+      status: "申請中",
       createdAt: "2026-01-01T12:00:00Z",
-      updatedAt: "2026-01-02T12:00:00Z",
     },
     {
       id: 2,
       title: "備品購入申請",
-      content: "新しいパソコン購入",
+      status: "承認済み",
       createdAt: "2026-01-03T12:00:00Z",
-      updatedAt: "2026-01-04T12:00:00Z",
     },
   ];
 

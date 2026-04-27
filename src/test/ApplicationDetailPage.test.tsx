@@ -40,8 +40,9 @@ describe("ApplicationDetailPage", () => {
       id: 1,
       title: "出張申請",
       content: "大阪出張",
+      applicantUserId: 1,
+      status: "申請中",
       createdAt: "2026-01-01T00:00:00Z",
-      updatedAt: "2026-01-02T00:00:00Z",
     };
 
     mockedGetApplicationById.mockResolvedValue(application);
@@ -51,6 +52,7 @@ describe("ApplicationDetailPage", () => {
     await waitFor(() => {
       expect(screen.getByText("出張申請")).toBeInTheDocument();
       expect(screen.getByText("大阪出張")).toBeInTheDocument();
+      expect(screen.getByText("申請中")).toBeInTheDocument();
     });
   });
 
@@ -79,8 +81,9 @@ describe("ApplicationDetailPage", () => {
       id: 1,
       title: "出張申請",
       content: "大阪出張",
+      applicantUserId: 1,
+      status: "申請中",
       createdAt: "2026-01-01T00:00:00Z",
-      updatedAt: "2026-01-02T00:00:00Z",
     });
 
     const user = userEvent.setup();
@@ -105,8 +108,9 @@ describe("ApplicationDetailPage", () => {
       id: 1,
       title: "出張申請",
       content: "大阪出張",
+      applicantUserId: 1,
+      status: "申請中",
       createdAt: "2026-01-01T00:00:00Z",
-      updatedAt: "2026-01-02T00:00:00Z",
     });
 
     const user = userEvent.setup();

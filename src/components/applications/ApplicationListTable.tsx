@@ -23,8 +23,8 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
         <TableRow>
           <TableCell>ID</TableCell>
           <TableCell>タイトル</TableCell>
+          <TableCell>ステータス</TableCell>
           <TableCell>作成日時</TableCell>
-          <TableCell>更新日時</TableCell>
           <TableCell>操作</TableCell>
         </TableRow>
       </TableHead>
@@ -33,8 +33,8 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
           <TableRow key={application.id}>
             <TableCell>{application.id}</TableCell>
             <TableCell>{application.title}</TableCell>
+            <TableCell>{application.status}</TableCell>
             <TableCell>{application.createdAt}</TableCell>
-            <TableCell>{application.updatedAt}</TableCell>
             <TableCell>
               <Stack direction="row" spacing={1}>
                 <Button

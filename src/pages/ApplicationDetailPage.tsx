@@ -79,10 +79,10 @@ export default function ApplicationDetailPage() {
             <strong>内容:</strong> {application.content}
           </p>
           <p>
-            <strong>作成日時:</strong> {application.createdAt}
+            <strong>ステータス:</strong> {application.status}
           </p>
           <p>
-            <strong>更新日時:</strong> {application.updatedAt}
+            <strong>作成日時:</strong> {application.createdAt}
           </p>
         </div>
       )}

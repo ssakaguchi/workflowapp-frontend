@@ -35,16 +35,14 @@ describe("ApplicationListPage", () => {
       {
         id: 1,
         title: "出張申請",
-        content: "大阪出張",
+        status: "申請中",
         createdAt: "2026-01-01T00:00:00Z",
-        updatedAt: "2026-01-01T00:00:00Z",
       },
       {
         id: 2,
         title: "備品購入申請",
-        content: "キーボード購入",
+        status: "承認済み",
         createdAt: "2026-01-01T00:00:00Z",
-        updatedAt: "2026-01-01T00:00:00Z",
       },
     ];
 
@@ -62,6 +60,8 @@ describe("ApplicationListPage", () => {
     await waitFor(() => {
       expect(screen.getByText("出張申請")).toBeInTheDocument();
       expect(screen.getByText("備品購入申請")).toBeInTheDocument();
+      expect(screen.getByText("申請中")).toBeInTheDocument();
+      expect(screen.getByText("承認済み")).toBeInTheDocument();
     });
 
     expect(screen.queryByText("読み込み中...")).not.toBeInTheDocument();
