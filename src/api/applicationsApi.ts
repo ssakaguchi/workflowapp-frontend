@@ -28,3 +28,8 @@ export async function updateApplication(
 ): Promise<void> {
   await apiClient.put(`/applications/${id}`, request);
 }
+
+// 申請を削除する関数
+export async function deleteApplication(id: number): Promise<void> {
+  await apiClient.delete(`/applications/${id}`);
+}
