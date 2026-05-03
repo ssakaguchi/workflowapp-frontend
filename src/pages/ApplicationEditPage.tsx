@@ -60,12 +60,12 @@ export default function ApplicationEditPage() {
     }
 
     if (!title.trim()) {
-      setSaveErrorMessage("タイトルは入力してください。");
+      setSaveErrorMessage("タイトルを入力してください。");
       return;
     }
 
     if (!content.trim()) {
-      setSaveErrorMessage("内容は入力してください。");
+      setSaveErrorMessage("内容を入力してください。");
       return;
     }
 
