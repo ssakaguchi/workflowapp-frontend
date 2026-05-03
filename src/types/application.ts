@@ -1,15 +1,20 @@
 export type ApplicationListItem = {
   id: number;
   title: string;
-  content: string; // 削除予定
+  status: string;
   createdAt: string;
-  updatedAt: string;
 };
 
 export type ApplicationDetail = {
   id: number;
   title: string;
   content: string;
+  status: string;
+  applicantUserId: number; // 最終的には使用しない可能性がある
   createdAt: string;
-  updatedAt: string;
+};
+
+export type UpdateApplicationRequest = {
+  title: string;
+  content: string;
 };

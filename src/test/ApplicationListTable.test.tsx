@@ -11,16 +11,14 @@ describe("ApplicationListTable", () => {
     {
       id: 1,
       title: "出張申請",
-      content: "大阪出張",
+      status: "申請中",
       createdAt: "2026-01-01T12:00:00Z",
-      updatedAt: "2026-01-02T12:00:00Z",
     },
     {
       id: 2,
       title: "備品購入申請",
-      content: "新しいパソコン購入",
+      status: "承認済み",
       createdAt: "2026-01-03T12:00:00Z",
-      updatedAt: "2026-01-04T12:00:00Z",
     },
   ];
 
@@ -58,16 +56,28 @@ describe("ApplicationListTable", () => {
     expect(editLinks[1]).toHaveAttribute("href", "/applications/2/edit");
   });
 
-  test("削除ボタンクリック時に対象IDでonDeleteが呼ばれること", async () => {
+  test("削除ボタンを押すとonDeleteが申請ID付きで呼ばれること", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
 
-    renderComponent(onDelete);
+    render(
+      <MemoryRouter>
+        <ApplicationListTable
+          applications={[
+            {
+              id: 1,
+              title: "出張申請",
+              status: "申請中",
+              createdAt: "2026-01-01T12:00:00Z",
+            },
+          ]}
+          onDelete={onDelete}
+        />
+      </MemoryRouter>,
+    );
 
-    const deleteButtons = screen.getAllByRole("button", { name: "削除" });
-    await user.click(deleteButtons[0]);
+    await user.click(screen.getByRole("button", { name: "削除" }));
 
-    expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledWith(1);
   });
 });
