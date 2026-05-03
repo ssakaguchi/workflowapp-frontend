@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { deleteApplication, getApplications } from "../api/applicationsApi";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ApplicationListPage } from "../pages/ApplicationListPage";
 import type { ApplicationListItem } from "../types/application";
 import { MemoryRouter } from "react-router-dom";
@@ -16,9 +16,14 @@ const mockedGetApplications = vi.mocked(getApplications);
 const mockedDeleteApplication = vi.mocked(deleteApplication);
 
 describe("ApplicationListPage", () => {
+  // 各テスト前にモックの状態をリセットして、テスト間の干渉を防止する
   beforeEach(() => {
-    // モックの状態をリセット
     vi.clearAllMocks();
+  });
+
+  // 各テスト後にモックを完全にリセットして、次のテストに影響を与えないようにする
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   test("初期表示時に読み込み中を表示すること", () => {
@@ -205,8 +210,6 @@ describe("ApplicationListPage", () => {
         <ApplicationListPage />
       </MemoryRouter>,
     );
-
-    screen.debug();
 
     expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
 

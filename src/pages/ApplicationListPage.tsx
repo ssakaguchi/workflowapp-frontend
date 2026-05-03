@@ -24,10 +24,13 @@ export function ApplicationListPage() {
   }, []);
 
   const handleDelete = async (id: number) => {
-    // 削除の確認
-    const confired = window.confirm("本当に削除しますか？");
+    // エラーメッセージをリセット
+    setErrorMessage("");
 
-    if (!confired) {
+    // 削除の確認
+    const confirmed = window.confirm("本当に削除しますか？");
+
+    if (!confirmed) {
       return;
     }
 
