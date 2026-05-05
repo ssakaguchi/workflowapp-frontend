@@ -156,4 +156,15 @@ describe("ApplicationCreatePage", () => {
     expect(await screen.findByText("申請作成画面")).toBeInTheDocument();
     expect(screen.queryByText("申請一覧")).not.toBeInTheDocument();
   });
+
+  test("一覧へ戻るボタンで一覧へ遷移すること", async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await screen.findByText("申請作成画面");
+    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
+
+    expect(screen.getByText("申請一覧")).toBeInTheDocument();
+  });
 });
