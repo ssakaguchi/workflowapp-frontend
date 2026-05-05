@@ -229,6 +229,8 @@ describe("ApplicationListPage", () => {
 
   test("申請作成画面へのリンクが表示され、正しい遷移先が設定されていること", () => {
     // arrange/act
+    mockedGetApplications.mockResolvedValue([]);
+
     render(
       <MemoryRouter>
         <ApplicationListPage />
