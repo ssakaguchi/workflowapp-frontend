@@ -226,4 +226,24 @@ describe("ApplicationListPage", () => {
     // 削除対象の申請が表示されたままであることを確認する
     expect(screen.getByText("削除対象の申請")).toBeInTheDocument();
   });
+
+  test("申請作成画面へのリンクが表示され、正しい遷移先が設定されていること", () => {
+    // arrange/act
+    mockedGetApplications.mockResolvedValue([]);
+
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    const createLink = screen.getByRole("link", { name: "新規作成" });
+
+    // assert
+    // リンクが表示されていることを確認する
+    expect(createLink).toBeInTheDocument();
+
+    // リンクの遷移先が正しいことを確認する
+    expect(createLink).toHaveAttribute("href", "/applications/new");
+  });
 });

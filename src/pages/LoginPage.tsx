@@ -18,7 +18,6 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    // debugger;
     // フォーム送信時の画面リロードを防止
     e.preventDefault();
 
