@@ -11,7 +11,7 @@ import {
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-// フォームの入力エラーを管理するための型定義   w
+// フォームの入力エラーを管理するための型定義
 type FormErrors = {
   loginId?: string;
   displayName?: string;
@@ -57,8 +57,6 @@ const RegisterPage: React.FC = () => {
   // フォームの送信処理を行う関数
   const handleRegister = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    debugger;
 
     setErrorMessage("");
 
