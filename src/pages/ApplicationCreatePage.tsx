@@ -58,6 +58,7 @@ export default function ApplicationCreatePage() {
           type="button"
           onClick={() => navigate("/applications")}
           style={{ marginLeft: "8px" }}
+          disabled={isSubmitting}
         >
           一覧へ戻る
         </button>

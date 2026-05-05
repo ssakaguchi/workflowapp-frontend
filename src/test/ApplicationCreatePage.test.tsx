@@ -167,4 +167,27 @@ describe("ApplicationCreatePage", () => {
 
     expect(screen.getByText("申請一覧")).toBeInTheDocument();
   });
+
+  test("申請中は一覧へ戻るボタンが無効になること", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    // createApplicationのモックが完了しないPromiseを返すように設定する
+    mockedCreateApplication.mockImplementation(() => new Promise(() => {}));
+
+    render(
+      <MemoryRouter>
+        <ApplicationCreatePage />
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("タイトル"), "新規申請タイトル");
+    await user.type(screen.getByLabelText("内容"), "新規申請内容");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "申請" }));
+
+    // assert
+    expect(screen.getByRole("button", { name: "一覧へ戻る" })).toBeDisabled();
+  });
 });
