@@ -10,7 +10,7 @@ import ApplicationDetailPage from "./pages/ApplicationDetailPage";
 import ApplicationEditPage from "./pages/ApplicationEditPage";
 import ApplicationCreatePage from "./pages/ApplicationCreatePage";
 
-//　ルーティングの設定を行うAppコンポーネント
+// ルーティングの設定を行うコンポーネント
 function App() {
   return (
     <BrowserRouter>

@@ -31,7 +31,7 @@ export function LoginPage() {
       // ログイン成功後、JWTを保存して申請一覧ページへ遷移
       tokenStorage.set(result.token);
       navigate("/applications");
-    } catch (error) {
+    } catch {
       setErrorMessage("ログインに失敗しました。");
     }
   };

@@ -43,7 +43,7 @@ export default function ApplicationCreatePage() {
       });
 
       navigate(`/applications`);
-    } catch (error) {
+    } catch {
       setErrorMessage("申請の作成に失敗しました。");
     } finally {
       setIsSubmitting(false);

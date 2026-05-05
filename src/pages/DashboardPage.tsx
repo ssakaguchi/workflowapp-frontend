@@ -21,23 +21,12 @@ const DashboardPage: React.FC = () => {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
-      } catch (error: any) {
-        if (error?.message === "TOKEN_NOT_FOUND") {
-          setErrorMessage(
-            "ユーザーが認証されていません。ログインしてください。",
-          );
-        } else if (error?.response?.status === 401) {
-          setErrorMessage(
-            "認証エラーが発生しました。再度ログインしてください。",
-          );
-        } else {
-          setErrorMessage("ユーザー情報の取得に失敗しました。");
-        }
+      } catch {
+        setErrorMessage("ユーザーが認証されていません。ログインしてください。");
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchUser();
   }, []);
 

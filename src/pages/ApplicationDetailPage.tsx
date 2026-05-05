@@ -31,7 +31,7 @@ export default function ApplicationDetailPage() {
       try {
         const response = await getApplicationById(applicationId);
         setApplication(response);
-      } catch (error) {
+      } catch {
         setErrorMessage("申請の詳細を取得できませんでした。");
       } finally {
         setIsLoading(false);

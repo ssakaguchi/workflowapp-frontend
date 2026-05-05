@@ -33,7 +33,7 @@ export default function ApplicationEditPage() {
         const application = await getApplicationById(applicationId);
         setTitle(application.title);
         setContent(application.content);
-      } catch (error) {
+      } catch {
         setErrorMessage("申請の詳細を取得できませんでした。");
       } finally {
         setIsLoading(false);
@@ -78,7 +78,7 @@ export default function ApplicationEditPage() {
       });
 
       navigate(`/applications/${applicationId}`);
-    } catch (error) {
+    } catch {
       setSaveErrorMessage("申請の更新に失敗しました。");
     } finally {
       setIsSaving(false);

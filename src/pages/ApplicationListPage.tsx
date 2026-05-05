@@ -15,7 +15,7 @@ export function ApplicationListPage() {
       try {
         const response = await getApplications();
         setApplications(response);
-      } catch (error) {
+      } catch {
         setErrorMessage("申請一覧の取得に失敗しました。");
       } finally {
         setIsLoading(false);
@@ -46,7 +46,7 @@ export function ApplicationListPage() {
       await deleteApplication(id);
 
       setApplications((current) => current.filter((app) => app.id !== id));
-    } catch (error) {
+    } catch {
       setErrorMessage("申請の削除に失敗しました。");
     }
   };
