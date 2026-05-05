@@ -42,7 +42,7 @@ describe("ApplicationCreatePage", () => {
     expect(getByLabelText("内容")).toBeInTheDocument();
   });
 
-  test("タイトルが未入力の場合、エラーメッセージを表示して更新APIを呼び出さないこと", async () => {
+  test("タイトルが未入力の場合、エラーメッセージを表示して作成APIを呼び出さないこと", async () => {
     // arrange
     const user = userEvent.setup();
 
@@ -62,7 +62,7 @@ describe("ApplicationCreatePage", () => {
     expect(mockedCreateApplication).not.toHaveBeenCalled();
   });
 
-  test("内容が未入力の場合、エラーメッセージを表示して更新APIを呼び出さないこと", async () => {
+  test("内容が未入力の場合、エラーメッセージを表示して作成APIを呼び出さないこと", async () => {
     // arrange
     const user = userEvent.setup();
 
