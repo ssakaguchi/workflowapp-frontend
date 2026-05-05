@@ -8,19 +8,29 @@ export default function ApplicationCreatePage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [titleError, setTitleError] = useState("");
+  const [contentError, setContentError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setTitleError("");
+    setContentError("");
     setErrorMessage("");
 
+    let hasError = false;
+
     if (!title.trim()) {
-      setErrorMessage("タイトルを入力してください。");
-      return;
+      setTitleError("タイトルを入力してください。");
+      hasError = true;
     }
 
     if (!content.trim()) {
-      setErrorMessage("内容を入力してください。");
+      setContentError("内容を入力してください。");
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -62,10 +72,16 @@ export default function ApplicationCreatePage() {
             id="title"
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setTitleError("");
+            }}
             style={{ width: "100%" }}
             disabled={isSubmitting}
+            aria-invalid={!!titleError}
+            aria-describedby={titleError ? "title-error" : undefined}
           />
+          {titleError && <p id="title-error">{titleError}</p>}
         </div>
 
         <div style={{ marginBottom: "12px" }}>
@@ -75,14 +91,20 @@ export default function ApplicationCreatePage() {
           <textarea
             id="content"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => {
+              setContent(e.target.value);
+              setContentError("");
+            }}
             rows={8}
             style={{ width: "100%", height: "100px" }}
             disabled={isSubmitting}
+            aria-invalid={!!contentError}
+            aria-describedby={contentError ? "content-error" : undefined}
           />
+          {contentError && <p id="content-error">{contentError}</p>}
         </div>
 
-        {errorMessage && <p>{errorMessage}</p>}
+        {errorMessage && <p role="alert">{errorMessage}</p>}
 
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "申請中..." : "申請"}
