@@ -1,10 +1,14 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import apiClient from "../api/apiClient";
-import { deleteApplication, updateApplication } from "../api/applicationsApi";
+import {
+  deleteApplication,
+  updateApplication,
+  createApplication,
+} from "../api/applicationsApi";
 import type { AxiosResponse } from "axios";
 import type { UpdateApplicationRequest } from "../types/application";
 
-describe("deleteApplication", () => {
+describe("Application API", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -34,5 +38,21 @@ describe("deleteApplication", () => {
 
     // deleteApplication関数が正しいエンドポイントでAPIを呼び出していることを検証
     expect(deleteSpy).toHaveBeenCalledWith("/applications/1");
+  });
+
+  test("createApplicationは申請作成APIを呼び出すこと", async () => {
+    const postSpy = vi
+      .spyOn(apiClient, "post")
+      .mockResolvedValue({} as AxiosResponse);
+
+    const request = {
+      title: "新規申請タイトル",
+      content: "新規申請内容",
+    };
+
+    await createApplication(request);
+
+    // createApplication関数が正しいエンドポイントとリクエストボディでAPIを呼び出していることを検証
+    expect(postSpy).toHaveBeenCalledWith("/applications", request);
   });
 });
