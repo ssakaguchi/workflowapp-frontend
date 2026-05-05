@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { deleteApplication, getApplications } from "../api/applicationsApi";
 import type { ApplicationListItem } from "../types/application";
 import { ApplicationListTable } from "../components/applications/ApplicationListTable";
+import { Button } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 
 export function ApplicationListPage() {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
@@ -52,6 +54,9 @@ export function ApplicationListPage() {
   return (
     <div>
       <h2>申請一覧</h2>
+      <Button component={RouterLink} to="/applications/new">
+        新規作成
+      </Button>
 
       {isLoading && <p>読み込み中...</p>}
 

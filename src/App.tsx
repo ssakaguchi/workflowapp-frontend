@@ -8,6 +8,7 @@ import Header from "./components/layout/Header";
 import { ApplicationListPage } from "./pages/ApplicationListPage";
 import ApplicationDetailPage from "./pages/ApplicationDetailPage";
 import ApplicationEditPage from "./pages/ApplicationEditPage";
+import ApplicationCreatePage from "./pages/ApplicationCreatePage";
 
 //　ルーティングの設定を行うAppコンポーネント
 function App() {
@@ -62,6 +63,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ApplicationEditPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/applications/new"
+          element={
+            <ProtectedRoute>
+              <ApplicationCreatePage />
             </ProtectedRoute>
           }
         />
