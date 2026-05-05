@@ -14,6 +14,11 @@ export type ApplicationDetail = {
   createdAt: string;
 };
 
+export type CreateApplicationRequest = {
+  title: string;
+  content: string;
+};
+
 export type UpdateApplicationRequest = {
   title: string;
   content: string;

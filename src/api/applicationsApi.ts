@@ -2,6 +2,7 @@ import type {
   ApplicationDetail,
   ApplicationListItem,
   UpdateApplicationRequest,
+  CreateApplicationRequest,
 } from "../types/application";
 import apiClient from "./apiClient";
 
@@ -19,6 +20,13 @@ export async function getApplicationById(
     `/applications/${id}`,
   );
   return response.data;
+}
+
+// 申請を新規作成する関数
+export async function createApplication(
+  request: CreateApplicationRequest,
+): Promise<void> {
+  await apiClient.post("/applications", request);
 }
 
 // 申請を更新する関数
