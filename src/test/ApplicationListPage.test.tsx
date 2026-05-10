@@ -105,7 +105,7 @@ describe("ApplicationListPage", () => {
     });
   });
 
-  test("削除確認でOKを選択すると、申請を削除して一覧を消すこと", async () => {
+  test("削除確認ダイアログでOKを選択すると、申請を削除して一覧から消すこと", async () => {
     const user = userEvent.setup();
 
     // 2件の申請を返すようにモックする
@@ -127,9 +127,6 @@ describe("ApplicationListPage", () => {
     // deleteApplicationが成功するようにモックする
     mockedDeleteApplication.mockResolvedValueOnce();
 
-    // window.confirmをモックして常にtrueを返すようにする
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-
     render(
       <MemoryRouter>
         <ApplicationListPage />
@@ -142,6 +139,17 @@ describe("ApplicationListPage", () => {
     // 最初の削除ボタンをクリックする
     const deleteButtons = screen.getAllByRole("button", { name: "削除" });
     await user.click(deleteButtons[0]);
+
+    expect(
+      screen.getByRole("dialog", { name: "申請を削除しますか？" }),
+    ).toBeInTheDocument();
+
+    // ダイアログに申請タイトルが表示されていることを確認する
+    expect(
+      screen.getByText("「削除対象の申請」を削除してもよろしいですか？"),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "削除する" }));
 
     // deleteApplicationが正しいID(1)で呼び出されたことを確認する
     expect(mockedDeleteApplication).toHaveBeenCalledWith(1);
@@ -154,7 +162,7 @@ describe("ApplicationListPage", () => {
     expect(screen.getByText("削除対象外の申請")).toBeInTheDocument();
   });
 
-  test("削除確認でキャンセルを選択すると、申請が削除されないこと", async () => {
+  test("削除確認ダイアログでキャンセルを選択すると、申請が削除されないこと", async () => {
     const user = userEvent.setup();
 
     mockedGetApplications.mockResolvedValue([
@@ -165,9 +173,6 @@ describe("ApplicationListPage", () => {
         createdAt: "2026-01-01T00:00:00Z",
       },
     ]);
-
-    // window.confirmをモックして常にfalseを返すようにする
-    vi.spyOn(window, "confirm").mockReturnValue(false);
 
     render(
       <MemoryRouter>
@@ -180,6 +185,18 @@ describe("ApplicationListPage", () => {
     // 最初の削除ボタンをクリックする
     const deleteButtons = screen.getAllByRole("button", { name: "削除" });
     await user.click(deleteButtons[0]);
+
+    // 削除確認ダイアログが表示されることを確認する
+    expect(
+      screen.getByRole("dialog", { name: "申請を削除しますか？" }),
+    ).toBeInTheDocument();
+
+    // ダイアログに申請タイトルが表示されていることを確認する
+    expect(
+      screen.getByText("「削除対象の申請」を削除してもよろしいですか？"),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
 
     // deleteApplicationが呼び出されないことを確認する
     expect(mockedDeleteApplication).not.toHaveBeenCalled();
@@ -202,9 +219,6 @@ describe("ApplicationListPage", () => {
 
     mockedDeleteApplication.mockRejectedValue(new Error("API error"));
 
-    // window.confirmをモックして常にtrueを返すようにする
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-
     render(
       <MemoryRouter>
         <ApplicationListPage />
@@ -214,6 +228,18 @@ describe("ApplicationListPage", () => {
     expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "削除" }));
+
+    // 削除確認ダイアログが表示されることを確認する
+    expect(
+      screen.getByRole("dialog", { name: "申請を削除しますか？" }),
+    ).toBeInTheDocument();
+
+    // ダイアログに申請タイトルが表示されていることを確認する
+    expect(
+      screen.getByText("「削除対象の申請」を削除してもよろしいですか？"),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "削除する" }));
 
     // deleteApplicationが正しいID(1)で呼び出されたことを確認する
     expect(mockedDeleteApplication).toHaveBeenCalledWith(1);

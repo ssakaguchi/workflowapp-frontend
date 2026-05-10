@@ -2,13 +2,22 @@ import { useEffect, useState } from "react";
 import { deleteApplication, getApplications } from "../api/applicationsApi";
 import type { ApplicationListItem } from "../types/application";
 import { ApplicationListTable } from "../components/applications/ApplicationListTable";
-import { Button } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+} from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
 export function ApplicationListPage() {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [deleteTargetApplication, setDeleteTargetApplication] =
+    useState<ApplicationListItem | null>(null);
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -25,30 +34,39 @@ export function ApplicationListPage() {
     fetchApplications();
   }, []);
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteClick = (application: ApplicationListItem) => {
+    setDeleteTargetApplication(application);
+  };
+
+  const handleDeleteConfirm = async () => {
     // エラーメッセージをリセット
     setErrorMessage("");
 
-    // 削除の確認
-    const confirmed = window.confirm("本当に削除しますか？");
-
-    if (!confirmed) {
+    if (deleteTargetApplication === null) {
       return;
     }
 
     // idが数値でない場合は処理を中断
-    if (!Number.isFinite(id)) {
+    if (!Number.isFinite(deleteTargetApplication.id)) {
       setErrorMessage("削除対象の申請IDが不正です。");
       return;
     }
 
     try {
-      await deleteApplication(id);
+      await deleteApplication(deleteTargetApplication.id);
 
-      setApplications((current) => current.filter((app) => app.id !== id));
+      setApplications((current) =>
+        current.filter((app) => app.id !== deleteTargetApplication.id),
+      );
     } catch {
       setErrorMessage("申請の削除に失敗しました。");
+    } finally {
+      setDeleteTargetApplication(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteTargetApplication(null);
   };
 
   return (
@@ -69,9 +87,34 @@ export function ApplicationListPage() {
       {!isLoading && applications.length > 0 && (
         <ApplicationListTable
           applications={applications}
-          onDelete={handleDelete}
+          onDelete={handleDeleteClick}
         />
       )}
+
+      <Dialog
+        open={deleteTargetApplication !== null}
+        onClose={handleDeleteCancel}
+      >
+        <DialogTitle>申請を削除しますか？</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {deleteTargetApplication
+              ? `「${deleteTargetApplication.title}」を削除してもよろしいですか？`
+              : ""}
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>キャンセル</Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+          >
+            削除する
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

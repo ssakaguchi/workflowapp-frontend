@@ -22,7 +22,9 @@ describe("ApplicationListTable", () => {
     },
   ];
 
-  function renderComponent(onDelete?: (id: number) => void) {
+  function renderComponent(
+    onDelete?: (application: ApplicationListItem) => void,
+  ) {
     render(
       <MemoryRouter>
         <ApplicationListTable applications={applications} onDelete={onDelete} />
@@ -78,6 +80,6 @@ describe("ApplicationListTable", () => {
 
     await user.click(screen.getByRole("button", { name: "削除" }));
 
-    expect(onDelete).toHaveBeenCalledWith(1);
+    expect(onDelete).toHaveBeenCalledWith(applications[0]);
   });
 });

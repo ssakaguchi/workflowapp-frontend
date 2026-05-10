@@ -13,7 +13,7 @@ import { Link as RouterLink } from "react-router-dom";
 // 申請一覧のテーブル表示コンポーネント
 type Props = {
   applications: ApplicationListItem[];
-  onDelete?: (id: number) => void;
+  onDelete?: (application: ApplicationListItem) => void;
 };
 
 export function ApplicationListTable({ applications, onDelete }: Props) {
@@ -59,7 +59,7 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
                   variant="contained"
                   color="error"
                   size="small"
-                  onClick={() => onDelete?.(application.id)}
+                  onClick={() => onDelete?.(application)}
                 >
                   削除
                 </Button>
