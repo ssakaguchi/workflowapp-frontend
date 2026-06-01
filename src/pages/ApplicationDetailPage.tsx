@@ -94,10 +94,10 @@ export default function ApplicationDetailPage() {
     try {
       await updateApplicationStatus(application.id, nextStatus);
 
-      setApplication({
-        ...application,
-        status: nextStatus,
-      });
+      // ステータス更新後は最新のステータスで画面を更新
+      setApplication((current) =>
+        current ? { ...current, status: nextStatus } : current,
+      );
 
       setStatusUpdateMessage("ステータスを更新しました。");
       setStatusConfirmOpen(false);
