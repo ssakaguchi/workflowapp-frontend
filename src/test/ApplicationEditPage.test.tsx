@@ -52,7 +52,7 @@ describe("ApplicationEditPage", () => {
       title: "取得したタイトル",
       content: "取得した内容",
       applicantUserId: 1,
-      status: "申請中",
+      status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
     };
 
@@ -74,7 +74,7 @@ describe("ApplicationEditPage", () => {
       title: "更新前のタイトル",
       content: "更新前の内容",
       applicantUserId: 1,
-      status: "申請中",
+      status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
     };
 
@@ -102,7 +102,7 @@ describe("ApplicationEditPage", () => {
       title: "更新前のタイトル",
       content: "更新前の内容",
       applicantUserId: 1,
-      status: "申請中",
+      status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
     };
 
@@ -131,7 +131,7 @@ describe("ApplicationEditPage", () => {
       title: "更新前のタイトル",
       content: "更新前の内容",
       applicantUserId: 1,
-      status: "申請中",
+      status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
     };
 
@@ -172,7 +172,7 @@ describe("ApplicationEditPage", () => {
       title: "更新前のタイトル",
       content: "更新前の内容",
       applicantUserId: 1,
-      status: "申請中",
+      status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
     };
 

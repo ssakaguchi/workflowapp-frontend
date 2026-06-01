@@ -41,3 +41,11 @@ export async function updateApplication(
 export async function deleteApplication(id: number): Promise<void> {
   await apiClient.delete(`/applications/${id}`);
 }
+
+// 申請のステータスを更新する関数
+export async function updateApplicationStatus(
+  id: number,
+  status: "Approved" | "Rejected",
+): Promise<void> {
+  await apiClient.patch(`/applications/${id}/status`, { status });
+}
