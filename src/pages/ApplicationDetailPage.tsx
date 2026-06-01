@@ -67,6 +67,20 @@ export default function ApplicationDetailPage() {
     setStatusConfirmOpen(true);
   };
 
+  // ステータスの表示ラベルを返す関数
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return "申請中";
+      case "Approved":
+        return "承認済み";
+      case "Rejected":
+        return "却下";
+      default:
+        return status;
+    }
+  };
+
   // ステータス更新を実行する関数
   const handleConfirmStatusUpdate = async () => {
     if (!application || !nextStatus) {
@@ -149,7 +163,7 @@ export default function ApplicationDetailPage() {
             <strong>内容:</strong> {application.content}
           </p>
           <p>
-            <strong>ステータス:</strong> {application.status}
+            <strong>ステータス:</strong> {statusLabel(application.status)}
           </p>
           <p>
             <strong>作成日時:</strong> {application.createdAt}

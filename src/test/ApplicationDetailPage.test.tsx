@@ -41,7 +41,7 @@ describe("ApplicationDetailPage", () => {
       title: "出張申請",
       content: "大阪出張",
       applicantUserId: 1,
-      status: "申請中",
+      status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
     };
 
@@ -82,7 +82,7 @@ describe("ApplicationDetailPage", () => {
       title: "出張申請",
       content: "大阪出張",
       applicantUserId: 1,
-      status: "申請中",
+      status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
     });
 
@@ -109,7 +109,7 @@ describe("ApplicationDetailPage", () => {
       title: "出張申請",
       content: "大阪出張",
       applicantUserId: 1,
-      status: "申請中",
+      status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
     });
 
