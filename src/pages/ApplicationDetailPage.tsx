@@ -83,6 +83,9 @@ export default function ApplicationDetailPage() {
 
   // ステータス更新を実行する関数
   const handleConfirmStatusUpdate = async () => {
+    if (isStatusUpdating) {
+      return;
+    }
     if (!application || !nextStatus) {
       return;
     }
