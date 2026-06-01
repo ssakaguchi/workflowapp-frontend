@@ -1,5 +1,6 @@
 import {
   Button,
+  Chip,
   Stack,
   Table,
   TableBody,
@@ -17,6 +18,36 @@ type Props = {
 };
 
 export function ApplicationListTable({ applications, onDelete }: Props) {
+  // ステータスの表示ラベルを返す関数
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return "申請中";
+      case "Approved":
+        return "承認済み";
+      case "Rejected":
+        return "却下";
+      default:
+        return status;
+    }
+  };
+
+  // ステータスに応じたChipの色を返す関数
+  const statusColor = (
+    status: string,
+  ): "default" | "success" | "error" | "warning" => {
+    switch (status) {
+      case "Pending":
+        return "warning";
+      case "Approved":
+        return "success";
+      case "Rejected":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
   return (
     <Table>
       <TableHead>
@@ -33,7 +64,13 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
           <TableRow key={application.id}>
             <TableCell>{application.id}</TableCell>
             <TableCell>{application.title}</TableCell>
-            <TableCell>{application.status}</TableCell>
+            <TableCell>
+              <Chip
+                label={statusLabel(application.status)}
+                color={statusColor(application.status)}
+                size="small"
+              />
+            </TableCell>
             <TableCell>{application.createdAt}</TableCell>
             <TableCell>
               <Stack direction="row" spacing={1}>

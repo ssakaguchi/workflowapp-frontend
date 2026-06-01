@@ -2,6 +2,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { ApplicationDetail } from "../types/application";
 import { useEffect, useState } from "react";
 import { getApplicationById } from "../api/applicationsApi";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Alert,
+} from "@mui/material";
+import { updateApplicationStatus } from "../api/applicationsApi";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
@@ -11,6 +22,15 @@ export default function ApplicationDetailPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  const [statusUpdateError, setStatusUpdateError] = useState("");
+  const [statusUpdateMessage, setStatusUpdateMessage] = useState("");
+
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [nextStatus, setNextStatus] = useState<"Approved" | "Rejected" | null>(
+    null,
+  );
 
   useEffect(() => {
     const fetchApplication = async () => {
@@ -41,10 +61,43 @@ export default function ApplicationDetailPage() {
     fetchApplication();
   }, [id]);
 
+  // ステータス更新の確認ダイアログを開く関数
+  const handleOpenStatusConfirm = (status: "Approved" | "Rejected") => {
+    setNextStatus(status);
+    setStatusConfirmOpen(true);
+  };
+
+  // ステータス更新を実行する関数
+  const handleConfirmStatusUpdate = async () => {
+    if (!application || !nextStatus) {
+      return;
+    }
+
+    setIsStatusUpdating(true);
+    setStatusUpdateError("");
+    setStatusUpdateMessage("");
+
+    try {
+      await updateApplicationStatus(application.id, nextStatus);
+
+      setApplication({
+        ...application,
+        status: nextStatus,
+      });
+
+      setStatusUpdateMessage("ステータスを更新しました。");
+      setStatusConfirmOpen(false);
+      setNextStatus(null);
+    } catch {
+      setStatusUpdateError("ステータスの更新に失敗しました。");
+    } finally {
+      setIsStatusUpdating(false);
+    }
+  };
+
   return (
     <div>
       <h2>申請詳細画面</h2>
-
       <div style={{ marginBottom: "16px" }}>
         <button type="button" onClick={() => navigate("/applications")}>
           一覧へ戻る
@@ -62,11 +115,28 @@ export default function ApplicationDetailPage() {
           編集
         </button>
       </div>
-
+      {application?.status === "Pending" && (
+        <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => handleOpenStatusConfirm("Approved")}
+            disabled={isStatusUpdating}
+          >
+            承認
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => handleOpenStatusConfirm("Rejected")}
+            disabled={isStatusUpdating}
+          >
+            却下
+          </Button>
+        </Box>
+      )}
       {isLoading && <p>読み込み中...</p>}
-
       {!isLoading && errorMessage && <p>{errorMessage}</p>}
-
       {!isLoading && !errorMessage && application && (
         <div>
           <p>
@@ -85,6 +155,54 @@ export default function ApplicationDetailPage() {
             <strong>作成日時:</strong> {application.createdAt}
           </p>
         </div>
+      )}
+
+      {/* ステータス更新の確認ダイアログ */}
+      <Dialog
+        open={statusConfirmOpen}
+        onClose={() => setStatusConfirmOpen(false)}
+      >
+        <DialogTitle>
+          {nextStatus === "Approved"
+            ? "申請を承認しますか？"
+            : "申請を却下しますか？"}
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            {nextStatus === "Approved"
+              ? "この申請を承認済みに変更します。よろしいですか？"
+              : "この申請を却下します。よろしいですか？"}
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={() => setStatusConfirmOpen(false)}
+            disabled={isStatusUpdating}
+          >
+            キャンセル
+          </Button>
+
+          <Button
+            onClick={handleConfirmStatusUpdate}
+            color={nextStatus === "Approved" ? "success" : "error"}
+            variant="contained"
+            disabled={isStatusUpdating}
+          >
+            {isStatusUpdating ? "更新中..." : "実行する"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {statusUpdateMessage && (
+        <Alert severity="success" sx={{ mt: 2 }}>
+          {statusUpdateMessage}
+        </Alert>
+      )}
+      {statusUpdateError && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {statusUpdateError}
+        </Alert>
       )}
     </div>
   );
