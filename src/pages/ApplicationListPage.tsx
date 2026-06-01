@@ -18,6 +18,7 @@ export function ApplicationListPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [deleteTargetApplication, setDeleteTargetApplication] =
     useState<ApplicationListItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -41,8 +42,9 @@ export function ApplicationListPage() {
   const handleDeleteConfirm = async () => {
     // エラーメッセージをリセット
     setErrorMessage("");
+    setIsDeleting(true);
 
-    if (deleteTargetApplication === null) {
+    if (deleteTargetApplication === null || isDeleting) {
       return;
     }
 
@@ -61,11 +63,13 @@ export function ApplicationListPage() {
     } catch {
       setErrorMessage("申請の削除に失敗しました。");
     } finally {
+      setIsDeleting(false);
       setDeleteTargetApplication(null);
     }
   };
 
   const handleDeleteCancel = () => {
+    setIsDeleting(false);
     setDeleteTargetApplication(null);
   };
 
@@ -105,11 +109,14 @@ export function ApplicationListPage() {
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={handleDeleteCancel}>キャンセル</Button>
+          <Button onClick={handleDeleteCancel} disabled={isDeleting}>
+            キャンセル
+          </Button>
           <Button
             onClick={handleDeleteConfirm}
             color="error"
             variant="contained"
+            disabled={isDeleting}
           >
             削除する
           </Button>
