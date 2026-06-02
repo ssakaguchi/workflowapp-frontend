@@ -14,6 +14,9 @@ export type ApplicationDetail = {
   createdAt: string;
 };
 
+// 申請の一覧表示やフィルタリングに使用する型
+export type StatusFilter = "All" | "Pending" | "Approved" | "Rejected";
+
 // 申請の新規作成や更新に使用するリクエストの型
 type ApplicationRequestBase = {
   title: string;

@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { deleteApplication, getApplications } from "../api/applicationsApi";
-import type { ApplicationListItem } from "../types/application";
+import type { ApplicationListItem, StatusFilter } from "../types/application";
 import { ApplicationListTable } from "../components/applications/ApplicationListTable";
 import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
   Button,
+  Typography,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -19,6 +24,7 @@ export function ApplicationListPage() {
   const [deleteTargetApplication, setDeleteTargetApplication] =
     useState<ApplicationListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("All");
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -73,28 +79,53 @@ export function ApplicationListPage() {
     setDeleteTargetApplication(null);
   };
 
+  const filteredApplications =
+    selectedStatus === "All"
+      ? applications
+      : applications.filter(
+          (application) => application.status === selectedStatus,
+        );
+
   return (
     <div>
       <h2>申請一覧</h2>
       <Button component={RouterLink} to="/applications/new">
         新規作成
       </Button>
+      {/* ステータスフィルタのセレクトボックス */}
+      <FormControl size="small" sx={{ minWidth: 160 }}>
+        <InputLabel id="status-filter-label">ステータス</InputLabel>
+        <Select
+          labelId="status-filter-label"
+          value={selectedStatus}
+          label="ステータス"
+          onChange={(e) => setSelectedStatus(e.target.value as StatusFilter)}
+        >
+          <MenuItem value="All">すべて</MenuItem>
+          <MenuItem value="Pending">申請中</MenuItem>
+          <MenuItem value="Approved">承認</MenuItem>
+          <MenuItem value="Rejected">却下</MenuItem>
+        </Select>
+      </FormControl>
+      {isLoading && <Typography>読み込み中...</Typography>}
+      {!isLoading && errorMessage && <Typography>{errorMessage}</Typography>}
 
-      {isLoading && <p>読み込み中...</p>}
-
-      {!isLoading && errorMessage && <p>{errorMessage}</p>}
-
-      {!isLoading && !errorMessage && applications.length === 0 && (
-        <p>申請データがありません。</p>
+      {/* データが空の場合のメッセージ表示 */}
+      {!isLoading && !errorMessage && applications.length === 0 ? (
+        <Typography>申請データがありません。</Typography>
+      ) : (
+        !isLoading &&
+        !errorMessage &&
+        filteredApplications.length === 0 && (
+          <Typography>該当する申請データがありません。</Typography>
+        )
       )}
-
-      {!isLoading && applications.length > 0 && (
+      {!isLoading && filteredApplications.length > 0 && (
         <ApplicationListTable
-          applications={applications}
+          applications={filteredApplications}
           onDelete={handleDeleteClick}
         />
       )}
-
       <Dialog
         open={deleteTargetApplication !== null}
         onClose={handleDeleteCancel}
