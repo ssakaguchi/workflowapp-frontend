@@ -111,15 +111,16 @@ export function ApplicationListPage() {
       {!isLoading && errorMessage && <Typography>{errorMessage}</Typography>}
 
       {/* データが空の場合のメッセージ表示 */}
-      {!isLoading && !errorMessage && applications.length === 0 ? (
+      {!isLoading && !errorMessage && applications.length === 0 && (
         <Typography>申請データがありません。</Typography>
-      ) : (
-        !isLoading &&
-        !errorMessage &&
-        filteredApplications.length === 0 && (
-          <Typography>該当する申請データがありません。</Typography>
-        )
       )}
+
+      {/* フィルタリング後のデータが空の場合のメッセージ表示 */}
+      {!isLoading && !errorMessage && filteredApplications.length === 0 && (
+        <Typography>該当する申請データがありません。</Typography>
+      )}
+
+      {/* フィルタリング後のデータがある場合のテーブル表示 */}
       {!isLoading && filteredApplications.length > 0 && (
         <ApplicationListTable
           applications={filteredApplications}
