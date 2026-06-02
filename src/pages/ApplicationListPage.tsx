@@ -13,11 +13,15 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  Pagination,
   Typography,
+  Box,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
 export function ApplicationListPage() {
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -25,12 +29,15 @@ export function ApplicationListPage() {
     useState<ApplicationListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("All");
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const response = await getApplications();
-        setApplications(response);
+        setErrorMessage("");
+        const response = await getApplications(page, pageSize, selectedStatus);
+        setApplications(response.items);
+        setTotalPages(response.totalPages);
       } catch {
         setErrorMessage("申請一覧の取得に失敗しました。");
       } finally {
@@ -39,7 +46,7 @@ export function ApplicationListPage() {
     };
 
     fetchApplications();
-  }, []);
+  }, [page, pageSize, selectedStatus]);
 
   const handleDeleteClick = (application: ApplicationListItem) => {
     setDeleteTargetApplication(application);
@@ -109,23 +116,32 @@ export function ApplicationListPage() {
       </FormControl>
       {isLoading && <Typography>読み込み中...</Typography>}
       {!isLoading && errorMessage && <Typography>{errorMessage}</Typography>}
-
       {/* データが空の場合のメッセージ表示 */}
       {!isLoading && !errorMessage && applications.length === 0 && (
         <Typography>申請データがありません。</Typography>
       )}
-
       {/* フィルタリング後のデータが空の場合のメッセージ表示 */}
       {!isLoading && !errorMessage && filteredApplications.length === 0 && (
         <Typography>該当する申請データがありません。</Typography>
       )}
-
       {/* フィルタリング後のデータがある場合のテーブル表示 */}
       {!isLoading && filteredApplications.length > 0 && (
         <ApplicationListTable
           applications={filteredApplications}
           onDelete={handleDeleteClick}
         />
+      )}
+
+      {/* ページネーションの表示は、totalPagesが1より大きい場合に限定する */}
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+          />
+        </Box>
       )}
       <Dialog
         open={deleteTargetApplication !== null}
