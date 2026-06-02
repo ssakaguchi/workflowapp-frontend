@@ -103,7 +103,7 @@ export function ApplicationListPage() {
         >
           <MenuItem value="All">すべて</MenuItem>
           <MenuItem value="Pending">申請中</MenuItem>
-          <MenuItem value="Approved">承認</MenuItem>
+          <MenuItem value="Approved">承認済み</MenuItem>
           <MenuItem value="Rejected">却下</MenuItem>
         </Select>
       </FormControl>

@@ -324,7 +324,7 @@ describe("ApplicationListPage", () => {
     );
 
     await user.click(screen.getByRole("combobox", { name: "ステータス" }));
-    await user.click(screen.getByRole("option", { name: "承認" }));
+    await user.click(screen.getByRole("option", { name: "承認済み" }));
 
     // 該当する申請データがありませんメッセージが表示されることを確認する
     expect(
