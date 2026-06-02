@@ -272,4 +272,63 @@ describe("ApplicationListPage", () => {
     // リンクの遷移先が正しいことを確認する
     expect(createLink).toHaveAttribute("href", "/applications/new");
   });
+
+  test("ステータスで絞り込むと、該当する申請のみが表示されること", async () => {
+    mockedGetApplications.mockResolvedValue([
+      {
+        id: 1,
+        title: "申請中の申請",
+        status: "Pending",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: 2,
+        title: "承認済みの申請",
+        status: "Approved",
+        createdAt: "2026-01-02T00:00:00Z",
+      },
+    ]);
+
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "ステータス" }));
+    await user.click(screen.getByRole("option", { name: "申請中" }));
+
+    // 「申請中」の申請のみが表示されることを確認する
+    expect(screen.getByText("申請中の申請")).toBeInTheDocument();
+    expect(screen.queryByText("承認済みの申請")).not.toBeInTheDocument();
+  });
+
+  test("ステータス絞り込み結果が0件の場合に該当する申請データがありませんを表示すること", async () => {
+    mockedGetApplications.mockResolvedValue([
+      {
+        id: 1,
+        title: "申請中の申請",
+        status: "Pending",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+    ]);
+
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "ステータス" }));
+    await user.click(screen.getByRole("option", { name: "承認済み" }));
+
+    // 該当する申請データがありませんメッセージが表示されることを確認する
+    expect(
+      screen.getByText("該当する申請データがありません。"),
+    ).toBeInTheDocument();
+  });
 });
