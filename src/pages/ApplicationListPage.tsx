@@ -16,6 +16,7 @@ import {
   Pagination,
   Typography,
   Box,
+  type SelectChangeEvent,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -93,6 +94,11 @@ export function ApplicationListPage() {
           (application) => application.status === selectedStatus,
         );
 
+  const handleStatusChange = (event: SelectChangeEvent<string>) => {
+    setSelectedStatus(event.target.value as StatusFilter);
+    setPage(1);
+  };
+
   return (
     <div>
       <h2>申請一覧</h2>
@@ -106,7 +112,7 @@ export function ApplicationListPage() {
           labelId="status-filter-label"
           value={selectedStatus}
           label="ステータス"
-          onChange={(e) => setSelectedStatus(e.target.value as StatusFilter)}
+          onChange={handleStatusChange}
         >
           <MenuItem value="All">すべて</MenuItem>
           <MenuItem value="Pending">申請中</MenuItem>
