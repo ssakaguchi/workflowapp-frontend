@@ -17,6 +17,15 @@ export type ApplicationDetail = {
 // 申請の一覧表示やフィルタリングに使用する型
 export type StatusFilter = "All" | "Pending" | "Approved" | "Rejected";
 
+// ページネーションされた結果を表す型
+export type PagedResponse<T> = {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 // 申請の新規作成や更新に使用するリクエストの型
 type ApplicationRequestBase = {
   title: string;

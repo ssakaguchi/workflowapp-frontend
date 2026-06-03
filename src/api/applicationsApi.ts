@@ -3,14 +3,30 @@ import type {
   ApplicationListItem,
   UpdateApplicationRequest,
   CreateApplicationRequest,
+  PagedResponse,
+  StatusFilter,
 } from "../types/application";
 import apiClient from "./apiClient";
 
-// 申請一覧を取得する関数
-export async function getApplications(): Promise<ApplicationListItem[]> {
-  const response = await apiClient.get<ApplicationListItem[]>("/applications");
+// 申請一覧をページネーションとステータスフィルタリングで取得する関数
+export const getApplications = async (
+  page: number,
+  pageSize: number,
+  status?: StatusFilter,
+): Promise<PagedResponse<ApplicationListItem>> => {
+  const response = await apiClient.get<PagedResponse<ApplicationListItem>>(
+    "/applications",
+    {
+      params: {
+        page,
+        pageSize,
+        status: status && status !== "All" ? status : undefined,
+      },
+    },
+  );
+
   return response.data;
-}
+};
 
 // 申請詳細を取得する関数
 export async function getApplicationById(

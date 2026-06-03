@@ -54,7 +54,13 @@ describe("ApplicationListPage", () => {
       },
     ];
 
-    mockedGetApplications.mockResolvedValue(applications);
+    mockedGetApplications.mockResolvedValue({
+      items: applications,
+      totalCount: 2,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
 
     render(
       <MemoryRouter>
@@ -76,7 +82,13 @@ describe("ApplicationListPage", () => {
   });
 
   test("APIが空配列を返した場合は申請データがありませんを表示すること", async () => {
-    mockedGetApplications.mockResolvedValue([]);
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
 
     render(
       <MemoryRouter>
@@ -109,20 +121,26 @@ describe("ApplicationListPage", () => {
     const user = userEvent.setup();
 
     // 2件の申請を返すようにモックする
-    mockedGetApplications.mockResolvedValue([
-      {
-        id: 1,
-        title: "削除対象の申請",
-        status: "申請中",
-        createdAt: "2026-01-01T00:00:00Z",
-      },
-      {
-        id: 2,
-        title: "削除対象外の申請",
-        status: "申請中",
-        createdAt: "2026-01-01T00:00:00Z",
-      },
-    ]);
+    mockedGetApplications.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          title: "削除対象の申請",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: 2,
+          title: "削除対象外の申請",
+          status: "Approved",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 2,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
 
     // deleteApplicationが成功するようにモックする
     mockedDeleteApplication.mockResolvedValueOnce();
@@ -165,14 +183,20 @@ describe("ApplicationListPage", () => {
   test("削除確認ダイアログでキャンセルを選択すると、申請が削除されないこと", async () => {
     const user = userEvent.setup();
 
-    mockedGetApplications.mockResolvedValue([
-      {
-        id: 1,
-        title: "削除対象の申請",
-        status: "申請中",
-        createdAt: "2026-01-01T00:00:00Z",
-      },
-    ]);
+    mockedGetApplications.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          title: "削除対象の申請",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
 
     render(
       <MemoryRouter>
@@ -208,14 +232,20 @@ describe("ApplicationListPage", () => {
   test("削除APIが失敗した場合にエラーメッセージを表示すること", async () => {
     const user = userEvent.setup();
 
-    mockedGetApplications.mockResolvedValue([
-      {
-        id: 1,
-        title: "削除対象の申請",
-        status: "申請中",
-        createdAt: "2026-01-01T00:00:00Z",
-      },
-    ]);
+    mockedGetApplications.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          title: "削除対象の申請",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
 
     mockedDeleteApplication.mockRejectedValue(new Error("API error"));
 
@@ -255,7 +285,13 @@ describe("ApplicationListPage", () => {
 
   test("申請作成画面へのリンクが表示され、正しい遷移先が設定されていること", () => {
     // arrange/act
-    mockedGetApplications.mockResolvedValue([]);
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
 
     render(
       <MemoryRouter>
@@ -273,21 +309,42 @@ describe("ApplicationListPage", () => {
     expect(createLink).toHaveAttribute("href", "/applications/new");
   });
 
-  test("ステータスで絞り込むと、該当する申請のみが表示されること", async () => {
-    mockedGetApplications.mockResolvedValue([
-      {
-        id: 1,
-        title: "申請中の申請",
-        status: "Pending",
-        createdAt: "2026-01-01T00:00:00Z",
-      },
-      {
-        id: 2,
-        title: "承認済みの申請",
-        status: "Approved",
-        createdAt: "2026-01-02T00:00:00Z",
-      },
-    ]);
+  test("ステータスで絞り込むと、指定したステータスで申請一覧を再取得すること", async () => {
+    mockedGetApplications
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 1,
+            title: "申請中の申請",
+            status: "Pending",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+          {
+            id: 2,
+            title: "承認済みの申請",
+            status: "Approved",
+            createdAt: "2026-01-02T00:00:00Z",
+          },
+        ],
+        totalCount: 2,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      })
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 1,
+            title: "申請中の申請",
+            status: "Pending",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      });
 
     const user = userEvent.setup();
 
@@ -302,18 +359,37 @@ describe("ApplicationListPage", () => {
 
     // 「申請中」の申請のみが表示されることを確認する
     expect(screen.getByText("申請中の申請")).toBeInTheDocument();
-    expect(screen.queryByText("承認済みの申請")).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByText("承認済みの申請")).not.toBeInTheDocument();
+    });
+
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "Pending");
   });
 
   test("ステータス絞り込み結果が0件の場合に該当する申請データがありませんを表示すること", async () => {
-    mockedGetApplications.mockResolvedValue([
-      {
-        id: 1,
-        title: "申請中の申請",
-        status: "Pending",
-        createdAt: "2026-01-01T00:00:00Z",
-      },
-    ]);
+    mockedGetApplications
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 1,
+            title: "申請中の申請",
+            status: "Pending",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      })
+      .mockResolvedValueOnce({
+        items: [],
+        totalCount: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      });
 
     const user = userEvent.setup();
 
@@ -330,5 +406,45 @@ describe("ApplicationListPage", () => {
     expect(
       screen.getByText("該当する申請データがありません。"),
     ).toBeInTheDocument();
+
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "Approved");
+  });
+
+  test("すべてのステータスを選択した場合に全件が表示されること", async () => {
+    mockedGetApplications.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          title: "申請中の申請",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: 2,
+          title: "承認済みの申請",
+          status: "Approved",
+          createdAt: "2026-01-02T00:00:00Z",
+        },
+      ],
+      totalCount: 2,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "ステータス" }));
+    await user.click(screen.getByRole("option", { name: "すべて" }));
+
+    // 全件が表示されることを確認する
+    expect(screen.getByText("申請中の申請")).toBeInTheDocument();
+    expect(screen.getByText("承認済みの申請")).toBeInTheDocument();
   });
 });

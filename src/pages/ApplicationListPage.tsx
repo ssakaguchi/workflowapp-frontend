@@ -13,11 +13,17 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  Pagination,
   Typography,
+  Box,
+  type SelectChangeEvent,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
 export function ApplicationListPage() {
+  const PAGE_SIZE = 10;
+
+  const [page, setPage] = useState(1);
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -25,12 +31,15 @@ export function ApplicationListPage() {
     useState<ApplicationListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("All");
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const response = await getApplications();
-        setApplications(response);
+        setErrorMessage("");
+        const response = await getApplications(page, PAGE_SIZE, selectedStatus);
+        setApplications(response.items);
+        setTotalPages(response.totalPages);
       } catch {
         setErrorMessage("申請一覧の取得に失敗しました。");
       } finally {
@@ -39,7 +48,7 @@ export function ApplicationListPage() {
     };
 
     fetchApplications();
-  }, []);
+  }, [page, PAGE_SIZE, selectedStatus]);
 
   const handleDeleteClick = (application: ApplicationListItem) => {
     setDeleteTargetApplication(application);
@@ -79,12 +88,10 @@ export function ApplicationListPage() {
     setDeleteTargetApplication(null);
   };
 
-  const filteredApplications =
-    selectedStatus === "All"
-      ? applications
-      : applications.filter(
-          (application) => application.status === selectedStatus,
-        );
+  const handleStatusChange = (event: SelectChangeEvent<string>) => {
+    setSelectedStatus(event.target.value as StatusFilter);
+    setPage(1);
+  };
 
   return (
     <div>
@@ -99,7 +106,7 @@ export function ApplicationListPage() {
           labelId="status-filter-label"
           value={selectedStatus}
           label="ステータス"
-          onChange={(e) => setSelectedStatus(e.target.value as StatusFilter)}
+          onChange={handleStatusChange}
         >
           <MenuItem value="All">すべて</MenuItem>
           <MenuItem value="Pending">申請中</MenuItem>
@@ -110,22 +117,32 @@ export function ApplicationListPage() {
       {isLoading && <Typography>読み込み中...</Typography>}
       {!isLoading && errorMessage && <Typography>{errorMessage}</Typography>}
 
-      {/* データが空の場合のメッセージ表示 */}
       {!isLoading && !errorMessage && applications.length === 0 && (
-        <Typography>申請データがありません。</Typography>
-      )}
-
-      {/* フィルタリング後のデータが空の場合のメッセージ表示 */}
-      {!isLoading && !errorMessage && filteredApplications.length === 0 && (
-        <Typography>該当する申請データがありません。</Typography>
+        <Typography>
+          {selectedStatus === "All"
+            ? "申請データがありません。"
+            : "該当する申請データがありません。"}
+        </Typography>
       )}
 
       {/* フィルタリング後のデータがある場合のテーブル表示 */}
-      {!isLoading && filteredApplications.length > 0 && (
+      {!isLoading && applications.length > 0 && (
         <ApplicationListTable
-          applications={filteredApplications}
+          applications={applications}
           onDelete={handleDeleteClick}
         />
+      )}
+
+      {/* ページネーションの表示は、totalPagesが1より大きい場合に限定する */}
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+          />
+        </Box>
       )}
       <Dialog
         open={deleteTargetApplication !== null}
