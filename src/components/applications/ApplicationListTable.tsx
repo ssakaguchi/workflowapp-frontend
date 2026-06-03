@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import type { ApplicationListItem } from "../../types/application";
 import { Link as RouterLink } from "react-router-dom";
+import { formatDateTime } from "../../utils/formatDateTime";
 
 // 申請一覧のテーブル表示コンポーネント
 type Props = {
@@ -71,7 +72,7 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
                 size="small"
               />
             </TableCell>
-            <TableCell>{application.createdAt}</TableCell>
+            <TableCell>{formatDateTime(application.createdAt)}</TableCell>
             <TableCell>
               <Stack direction="row" spacing={1}>
                 <Button

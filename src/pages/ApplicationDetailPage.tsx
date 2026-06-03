@@ -13,6 +13,7 @@ import {
   Alert,
 } from "@mui/material";
 import { updateApplicationStatus } from "../api/applicationsApi";
+import { formatDateTime } from "../utils/formatDateTime";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
@@ -169,7 +170,7 @@ export default function ApplicationDetailPage() {
             <strong>ステータス:</strong> {statusLabel(application.status)}
           </p>
           <p>
-            <strong>作成日時:</strong> {application.createdAt}
+            <strong>作成日時:</strong> {formatDateTime(application.createdAt)}
           </p>
         </div>
       )}
