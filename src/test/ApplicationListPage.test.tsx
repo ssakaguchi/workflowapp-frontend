@@ -379,4 +379,42 @@ describe("ApplicationListPage", () => {
       screen.getByText("該当する申請データがありません。"),
     ).toBeInTheDocument();
   });
+
+  test("すべてのステータスを選択した場合に全件が表示されること", async () => {
+    mockedGetApplications.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          title: "申請中の申請",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: 2,
+          title: "承認済みの申請",
+          status: "Approved",
+          createdAt: "2026-01-02T00:00:00Z",
+        },
+      ],
+      totalCount: 2,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "ステータス" }));
+    await user.click(screen.getByRole("option", { name: "すべて" }));
+
+    // 全件が表示されることを確認する
+    expect(screen.getByText("申請中の申請")).toBeInTheDocument();
+    expect(screen.getByText("承認済みの申請")).toBeInTheDocument();
+  });
 });

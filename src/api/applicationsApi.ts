@@ -4,6 +4,7 @@ import type {
   UpdateApplicationRequest,
   CreateApplicationRequest,
   PagedResponse,
+  StatusFilter,
 } from "../types/application";
 import apiClient from "./apiClient";
 
@@ -11,7 +12,7 @@ import apiClient from "./apiClient";
 export const getApplications = async (
   page: number,
   pageSize: number,
-  status?: string,
+  status?: StatusFilter,
 ): Promise<PagedResponse<ApplicationListItem>> => {
   const response = await apiClient.get<PagedResponse<ApplicationListItem>>(
     "/applications",
@@ -19,7 +20,7 @@ export const getApplications = async (
       params: {
         page,
         pageSize,
-        status: status || undefined,
+        status: status && status !== "All" ? status : undefined,
       },
     },
   );
