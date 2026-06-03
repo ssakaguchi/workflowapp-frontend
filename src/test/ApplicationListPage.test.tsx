@@ -126,13 +126,13 @@ describe("ApplicationListPage", () => {
         {
           id: 1,
           title: "削除対象の申請",
-          status: "申請中",
+          status: "Pending",
           createdAt: "2026-01-01T00:00:00Z",
         },
         {
           id: 2,
           title: "削除対象外の申請",
-          status: "申請中",
+          status: "Approved",
           createdAt: "2026-01-01T00:00:00Z",
         },
       ],
@@ -188,7 +188,7 @@ describe("ApplicationListPage", () => {
         {
           id: 1,
           title: "削除対象の申請",
-          status: "申請中",
+          status: "Pending",
           createdAt: "2026-01-01T00:00:00Z",
         },
       ],
@@ -237,7 +237,7 @@ describe("ApplicationListPage", () => {
         {
           id: 1,
           title: "削除対象の申請",
-          status: "申請中",
+          status: "Pending",
           createdAt: "2026-01-01T00:00:00Z",
         },
       ],
@@ -309,27 +309,42 @@ describe("ApplicationListPage", () => {
     expect(createLink).toHaveAttribute("href", "/applications/new");
   });
 
-  test("ステータスで絞り込むと、該当する申請のみが表示されること", async () => {
-    mockedGetApplications.mockResolvedValue({
-      items: [
-        {
-          id: 1,
-          title: "申請中の申請",
-          status: "Pending",
-          createdAt: "2026-01-01T00:00:00Z",
-        },
-        {
-          id: 2,
-          title: "承認済みの申請",
-          status: "Approved",
-          createdAt: "2026-01-02T00:00:00Z",
-        },
-      ],
-      totalCount: 2,
-      page: 1,
-      pageSize: 10,
-      totalPages: 1,
-    });
+  test("ステータスで絞り込むと、指定したステータスで申請一覧を再取得すること", async () => {
+    mockedGetApplications
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 1,
+            title: "申請中の申請",
+            status: "Pending",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+          {
+            id: 2,
+            title: "承認済みの申請",
+            status: "Approved",
+            createdAt: "2026-01-02T00:00:00Z",
+          },
+        ],
+        totalCount: 2,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      })
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 1,
+            title: "申請中の申請",
+            status: "Pending",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      });
 
     const user = userEvent.setup();
 
@@ -344,24 +359,37 @@ describe("ApplicationListPage", () => {
 
     // 「申請中」の申請のみが表示されることを確認する
     expect(screen.getByText("申請中の申請")).toBeInTheDocument();
-    expect(screen.queryByText("承認済みの申請")).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByText("承認済みの申請")).not.toBeInTheDocument();
+    });
+
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "Pending");
   });
 
   test("ステータス絞り込み結果が0件の場合に該当する申請データがありませんを表示すること", async () => {
-    mockedGetApplications.mockResolvedValue({
-      items: [
-        {
-          id: 1,
-          title: "申請中の申請",
-          status: "Pending",
-          createdAt: "2026-01-01T00:00:00Z",
-        },
-      ],
-      totalCount: 1,
-      page: 1,
-      pageSize: 10,
-      totalPages: 1,
-    });
+    mockedGetApplications
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 1,
+            title: "申請中の申請",
+            status: "Pending",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      })
+      .mockResolvedValueOnce({
+        items: [],
+        totalCount: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      });
 
     const user = userEvent.setup();
 
@@ -378,6 +406,8 @@ describe("ApplicationListPage", () => {
     expect(
       screen.getByText("該当する申請データがありません。"),
     ).toBeInTheDocument();
+
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "Approved");
   });
 
   test("すべてのステータスを選択した場合に全件が表示されること", async () => {

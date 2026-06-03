@@ -88,13 +88,6 @@ export function ApplicationListPage() {
     setDeleteTargetApplication(null);
   };
 
-  const filteredApplications =
-    selectedStatus === "All"
-      ? applications
-      : applications.filter(
-          (application) => application.status === selectedStatus,
-        );
-
   const handleStatusChange = (event: SelectChangeEvent<string>) => {
     setSelectedStatus(event.target.value as StatusFilter);
     setPage(1);
@@ -123,18 +116,19 @@ export function ApplicationListPage() {
       </FormControl>
       {isLoading && <Typography>読み込み中...</Typography>}
       {!isLoading && errorMessage && <Typography>{errorMessage}</Typography>}
-      {/* データが空の場合のメッセージ表示 */}
+
       {!isLoading && !errorMessage && applications.length === 0 && (
-        <Typography>申請データがありません。</Typography>
+        <Typography>
+          {selectedStatus === "All"
+            ? "申請データがありません。"
+            : "該当する申請データがありません。"}
+        </Typography>
       )}
-      {/* フィルタリング後のデータが空の場合のメッセージ表示 */}
-      {!isLoading && !errorMessage && filteredApplications.length === 0 && (
-        <Typography>該当する申請データがありません。</Typography>
-      )}
+
       {/* フィルタリング後のデータがある場合のテーブル表示 */}
-      {!isLoading && filteredApplications.length > 0 && (
+      {!isLoading && applications.length > 0 && (
         <ApplicationListTable
-          applications={filteredApplications}
+          applications={applications}
           onDelete={handleDeleteClick}
         />
       )}
