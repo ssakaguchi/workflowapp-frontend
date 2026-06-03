@@ -21,8 +21,9 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 
 export function ApplicationListPage() {
+  const PAGE_SIZE = 10;
+
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -36,7 +37,7 @@ export function ApplicationListPage() {
     const fetchApplications = async () => {
       try {
         setErrorMessage("");
-        const response = await getApplications(page, pageSize, selectedStatus);
+        const response = await getApplications(page, PAGE_SIZE, selectedStatus);
         setApplications(response.items);
         setTotalPages(response.totalPages);
       } catch {
@@ -47,7 +48,7 @@ export function ApplicationListPage() {
     };
 
     fetchApplications();
-  }, [page, pageSize, selectedStatus]);
+  }, [page, PAGE_SIZE, selectedStatus]);
 
   const handleDeleteClick = (application: ApplicationListItem) => {
     setDeleteTargetApplication(application);
