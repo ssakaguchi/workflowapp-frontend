@@ -140,7 +140,6 @@ export default function ApplicationDetailPage() {
               navigate(`/applications/${id}/edit`);
             }
           }}
-          style={{ marginLeft: "8px" }}
         >
           編集
         </Button>
