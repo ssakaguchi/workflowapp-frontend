@@ -123,7 +123,7 @@ export default function ApplicationDetailPage() {
         申請詳細画面
       </Typography>
 
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="right">
+      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="flex-end">
         <Button
           type="button"
           variant="outlined"
