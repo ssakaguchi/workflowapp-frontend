@@ -170,21 +170,6 @@ export default function ApplicationDetailPage() {
       {!isLoading && !errorMessage && application && (
         <Paper sx={{ p: 3 }}>
           <Stack spacing={2}>
-            {/* <p>
-              <strong>ID:</strong> {application.id}
-            </p>
-            <p>
-              <strong>タイトル:</strong> {application.title}
-            </p>
-            <p>
-              <strong>内容:</strong> {application.content}
-            </p>
-            <p>
-              <strong>ステータス:</strong> {statusLabel(application.status)}
-            </p>
-            <p>
-              <strong>作成日時:</strong> {formatDateTime(application.createdAt)}
-            </p> */}
 
             <Typography>ID: {application.id}</Typography>
             <Typography>タイトル: {application.title}</Typography>
