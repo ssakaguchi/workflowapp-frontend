@@ -96,7 +96,6 @@ export default function ApplicationEditPage() {
         <Button
           type="button"
           onClick={() => navigate("/applications")}
-          style={{ marginLeft: "8px" }}
         >
           一覧へ戻る
         </Button>
