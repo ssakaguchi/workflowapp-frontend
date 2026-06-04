@@ -56,7 +56,7 @@ export default function ApplicationCreatePage() {
       <Typography variant="h5" component="h1" gutterBottom>
         申請作成画面
       </Typography>
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="right">
+      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="flex-end">
         <Button
           type="button"
           variant="outlined"
