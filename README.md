@@ -9,9 +9,6 @@ React + TypeScript + Vite で構築しており、ASP.NET Core Web API と連携
 
 ## 画面イメージ
 
-スクリーンショットは、`docs/images/` 配下に配置する想定です。  
-画像を追加した後、下記のコメントアウトを解除してください。
-
 ### ログイン画面
 
 ![ログイン画面](docs/images/login.png)
