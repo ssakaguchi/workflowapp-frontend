@@ -5,12 +5,16 @@ import { getApplicationById } from "../api/applicationsApi";
 import {
   Box,
   Button,
+  Container,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
   Alert,
+  Stack,
+  Typography,
+  Paper,
 } from "@mui/material";
 import { updateApplicationStatus } from "../api/applicationsApi";
 import { formatDateTime } from "../utils/formatDateTime";
@@ -114,25 +118,32 @@ export default function ApplicationDetailPage() {
   };
 
   return (
-    <div>
-      <h2>申請詳細画面</h2>
-      <div style={{ marginBottom: "16px" }}>
-        <button type="button" onClick={() => navigate("/applications")}>
-          一覧へ戻る
-        </button>
+    <Container>
+      <Typography variant="h5" component="h1" gutterBottom>
+        申請詳細画面
+      </Typography>
 
-        <button
+      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="flex-end">
+        <Button
           type="button"
+          variant="outlined"
+          onClick={() => navigate("/applications")}
+        >
+          一覧へ戻る
+        </Button>
+
+        <Button
+          type="button"
+          variant="outlined"
           onClick={() => {
             if (id) {
               navigate(`/applications/${id}/edit`);
             }
           }}
-          style={{ marginLeft: "8px" }}
         >
           編集
-        </button>
-      </div>
+        </Button>
+      </Stack>
       {application?.status === "Pending" && (
         <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
           <Button
@@ -156,23 +167,20 @@ export default function ApplicationDetailPage() {
       {isLoading && <p>読み込み中...</p>}
       {!isLoading && errorMessage && <p>{errorMessage}</p>}
       {!isLoading && !errorMessage && application && (
-        <div>
-          <p>
-            <strong>ID:</strong> {application.id}
-          </p>
-          <p>
-            <strong>タイトル:</strong> {application.title}
-          </p>
-          <p>
-            <strong>内容:</strong> {application.content}
-          </p>
-          <p>
-            <strong>ステータス:</strong> {statusLabel(application.status)}
-          </p>
-          <p>
-            <strong>作成日時:</strong> {formatDateTime(application.createdAt)}
-          </p>
-        </div>
+        <Paper sx={{ p: 3 }}>
+          <Stack spacing={2}>
+
+            <Typography>ID: {application.id}</Typography>
+            <Typography>タイトル: {application.title}</Typography>
+            <Typography>内容: {application.content}</Typography>
+            <Typography>
+              ステータス: {statusLabel(application.status)}
+            </Typography>
+            <Typography>
+              作成日時: {formatDateTime(application.createdAt)}
+            </Typography>
+          </Stack>
+        </Paper>
       )}
 
       {/* ステータス更新の確認ダイアログ */}
@@ -222,6 +230,6 @@ export default function ApplicationDetailPage() {
           {statusUpdateError}
         </Alert>
       )}
-    </div>
+    </Container>
   );
 }

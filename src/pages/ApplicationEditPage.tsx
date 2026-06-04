@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getApplicationById, updateApplication } from "../api/applicationsApi";
+import { Button, TextField, Typography, Container, Stack } from "@mui/material";
 
 export default function ApplicationEditPage() {
   const { id } = useParams();
@@ -86,63 +87,72 @@ export default function ApplicationEditPage() {
   };
 
   return (
-    <div>
-      <h2>申請編集画面</h2>
-      <div style={{ marginBottom: "16px" }}>
-        <button
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Typography variant="h5" component="h1" gutterBottom>
+        申請編集画面
+      </Typography>
+
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ mb: 2 }}
+        justifyContent="flex-end"
+      >
+        <Button
           type="button"
+          variant="outlined"
           onClick={() => navigate("/applications")}
-          style={{ marginLeft: "8px" }}
         >
           一覧へ戻る
-        </button>
+        </Button>
         {id && (
-          <button type="button" onClick={() => navigate(`/applications/${id}`)}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => navigate(`/applications/${id}`)}
+          >
             詳細へ戻る
-          </button>
+          </Button>
         )}
-      </div>
+      </Stack>
+
       {isLoading && <p>読み込み中...</p>}
 
       {!isLoading && errorMessage && <p>{errorMessage}</p>}
 
       {!isLoading && !errorMessage && (
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "12px" }}>
-            <label htmlFor="title" style={{ display: "block" }}>
-              タイトル
-            </label>
-            <input
+          <Stack spacing={2}>
+            <TextField
+              label="タイトル"
               id="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              style={{ width: "100%" }}
               disabled={isSaving}
+              fullWidth
             />
-          </div>
 
-          <div style={{ marginBottom: "12px" }}>
-            <label htmlFor="content" style={{ display: "block" }}>
-              内容
-            </label>
-            <textarea
+            <TextField
+              label="内容"
               id="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={8}
-              style={{ width: "100%", height: "100px" }}
+              multiline
+              rows={5}
+              fullWidth
               disabled={isSaving}
             />
-          </div>
 
-          {saveErrorMessage && <p>{saveErrorMessage}</p>}
-
-          <button type="submit" disabled={isSaving}>
-            {isSaving ? "保存中..." : "保存"}
-          </button>
+            {saveErrorMessage && (
+              <Typography color="error">{saveErrorMessage}</Typography>
+            )}
+            <Button variant="contained" type="submit" disabled={isSaving}>
+              {isSaving ? "保存中..." : "保存"}
+            </Button>
+          </Stack>
         </form>
       )}
-    </div>
+    </Container>
   );
 }

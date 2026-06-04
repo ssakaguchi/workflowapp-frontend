@@ -5,6 +5,7 @@ import {
   Link,
   TextField,
   Typography,
+  Paper,
 } from "@mui/material";
 import { useState } from "react";
 import { authApi } from "../api/authApi";
@@ -37,9 +38,9 @@ export function LoginPage() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box mt={8}>
-        <Typography variant="h4" gutterBottom>
+    <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <Paper sx={{ p: 4 }}>
+        <Typography variant="h4" component="h1" align="center" gutterBottom>
           ログイン
         </Typography>
 
@@ -79,7 +80,7 @@ export function LoginPage() {
             {errorMessage}
           </Typography>
         )}
-      </Box>
+      </Paper>
     </Container>
   );
 }

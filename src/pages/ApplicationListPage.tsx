@@ -16,6 +16,7 @@ import {
   Pagination,
   Typography,
   Box,
+  Stack,
   type SelectChangeEvent,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
@@ -95,25 +96,41 @@ export function ApplicationListPage() {
 
   return (
     <div>
-      <h2>申請一覧</h2>
-      <Button component={RouterLink} to="/applications/new">
-        新規作成
-      </Button>
-      {/* ステータスフィルタのセレクトボックス */}
-      <FormControl size="small" sx={{ minWidth: 160 }}>
-        <InputLabel id="status-filter-label">ステータス</InputLabel>
-        <Select
-          labelId="status-filter-label"
-          value={selectedStatus}
-          label="ステータス"
-          onChange={handleStatusChange}
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h5" component="h1">
+          申請一覧
+        </Typography>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 2 }}
         >
-          <MenuItem value="All">すべて</MenuItem>
-          <MenuItem value="Pending">申請中</MenuItem>
-          <MenuItem value="Approved">承認済み</MenuItem>
-          <MenuItem value="Rejected">却下</MenuItem>
-        </Select>
-      </FormControl>
+          {/* ステータスフィルタのセレクトボックス */}
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel id="status-filter-label">ステータス</InputLabel>
+            <Select
+              labelId="status-filter-label"
+              value={selectedStatus}
+              label="ステータス"
+              onChange={handleStatusChange}
+            >
+              <MenuItem value="All">すべて</MenuItem>
+              <MenuItem value="Pending">申請中</MenuItem>
+              <MenuItem value="Approved">承認済み</MenuItem>
+              <MenuItem value="Rejected">却下</MenuItem>
+            </Select>
+          </FormControl>
+          <Button
+            variant="contained"
+            component={RouterLink}
+            to="/applications/new"
+          >
+            新規作成
+          </Button>
+        </Stack>
+      </Box>
+
       {isLoading && <Typography>読み込み中...</Typography>}
       {!isLoading && errorMessage && <Typography>{errorMessage}</Typography>}
 

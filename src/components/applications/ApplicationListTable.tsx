@@ -94,7 +94,7 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
                 </Button>
 
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   color="error"
                   size="small"
                   onClick={() => onDelete?.(application)}

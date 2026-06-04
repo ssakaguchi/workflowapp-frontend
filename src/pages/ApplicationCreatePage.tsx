@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createApplication } from "../api/applicationsApi";
+import { Container, Typography, Button, Stack, TextField } from "@mui/material";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
@@ -51,33 +52,34 @@ export default function ApplicationCreatePage() {
   };
 
   return (
-    <div>
-      <h2>申請作成画面</h2>
-      <div style={{ marginBottom: "16px" }}>
-        <button
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Typography variant="h5" component="h1" gutterBottom>
+        申請作成画面
+      </Typography>
+      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="flex-end">
+        <Button
           type="button"
+          variant="outlined"
           onClick={() => navigate("/applications")}
-          style={{ marginLeft: "8px" }}
+          sx={{ ml: 1 }}
           disabled={isSubmitting}
         >
           一覧へ戻る
-        </button>
-      </div>
+        </Button>
+      </Stack>
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "12px" }}>
-          <label htmlFor="title" style={{ display: "block" }}>
-            タイトル
-          </label>
-          <input
+          <TextField
             id="title"
+            label="タイトル"
             type="text"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
               setTitleError("");
             }}
-            style={{ width: "100%" }}
+            fullWidth
             disabled={isSubmitting}
             aria-invalid={!!titleError}
             aria-describedby={titleError ? "title-error" : undefined}
@@ -85,32 +87,31 @@ export default function ApplicationCreatePage() {
           {titleError && <p id="title-error">{titleError}</p>}
         </div>
 
-        <div style={{ marginBottom: "12px" }}>
-          <label htmlFor="content" style={{ display: "block" }}>
-            内容
-          </label>
-          <textarea
+        <Stack spacing={2}>
+          <TextField
             id="content"
+            label="内容"
             value={content}
             onChange={(e) => {
               setContent(e.target.value);
               setContentError("");
             }}
+            multiline
             rows={8}
-            style={{ width: "100%", height: "100px" }}
+            fullWidth
             disabled={isSubmitting}
             aria-invalid={!!contentError}
             aria-describedby={contentError ? "content-error" : undefined}
           />
           {contentError && <p id="content-error">{contentError}</p>}
-        </div>
 
-        {errorMessage && <p role="alert">{errorMessage}</p>}
+          {errorMessage && <p role="alert">{errorMessage}</p>}
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "申請中..." : "申請"}
-        </button>
+          <Button type="submit" variant="contained" disabled={isSubmitting}>
+            {isSubmitting ? "申請中..." : "申請"}
+          </Button>
+        </Stack>
       </form>
-    </div>
+    </Container>
   );
 }
