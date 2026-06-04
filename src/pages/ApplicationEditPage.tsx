@@ -92,15 +92,25 @@ export default function ApplicationEditPage() {
         申請編集画面
       </Typography>
 
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="flex-end">
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ mb: 2 }}
+        justifyContent="flex-end"
+      >
         <Button
           type="button"
+          variant="outlined"
           onClick={() => navigate("/applications")}
         >
           一覧へ戻る
         </Button>
         {id && (
-          <Button type="button" onClick={() => navigate(`/applications/${id}`)}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => navigate(`/applications/${id}`)}
+          >
             詳細へ戻る
           </Button>
         )}
