@@ -56,9 +56,9 @@ describe("ApplicationDetailPage", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText("出張申請")).toBeInTheDocument();
-      expect(screen.getByText("大阪出張")).toBeInTheDocument();
-      expect(screen.getByText("申請中")).toBeInTheDocument();
+      expect(screen.getByText("タイトル: 出張申請")).toBeInTheDocument();
+      expect(screen.getByText("内容: 大阪出張")).toBeInTheDocument();
+      expect(screen.getByText("ステータス: 申請中")).toBeInTheDocument();
     });
   });
 
@@ -103,7 +103,7 @@ describe("ApplicationDetailPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("出張申請");
+    await screen.findByText("タイトル: 出張申請");
     await user.click(screen.getByText("一覧へ戻る"));
 
     expect(screen.getByText("一覧画面")).toBeInTheDocument();
@@ -130,7 +130,7 @@ describe("ApplicationDetailPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("出張申請");
+    await screen.findByText("タイトル: 出張申請");
     await user.click(screen.getByText("編集"));
 
     expect(screen.getByText("編集画面")).toBeInTheDocument();
@@ -256,7 +256,7 @@ describe("ApplicationDetailPage", () => {
       expect(
         screen.getByText("ステータスを更新しました。"),
       ).toBeInTheDocument();
-      expect(screen.getByText("承認済み")).toBeInTheDocument();
+      expect(screen.getByText("ステータス: 承認済み")).toBeInTheDocument();
     });
   });
 
