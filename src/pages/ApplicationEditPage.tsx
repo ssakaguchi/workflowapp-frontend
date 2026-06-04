@@ -92,7 +92,7 @@ export default function ApplicationEditPage() {
         申請編集画面
       </Typography>
 
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="right">
+      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="flex-end">
         <Button
           type="button"
           onClick={() => navigate("/applications")}
