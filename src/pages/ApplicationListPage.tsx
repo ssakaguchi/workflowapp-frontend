@@ -107,7 +107,7 @@ export function ApplicationListPage() {
           sx={{ mb: 2 }}
         >
           {/* ステータスフィルタのセレクトボックス */}
-          <FormControl size="small" sx={{ minWidth: 160, mb: 2 }}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
             <InputLabel id="status-filter-label">ステータス</InputLabel>
             <Select
               labelId="status-filter-label"
