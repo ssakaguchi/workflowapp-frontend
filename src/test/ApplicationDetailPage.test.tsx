@@ -21,7 +21,9 @@ const mockedUpdateApplicationStatus = vi.mocked(updateApplicationStatus);
 
 vi.mock("../utils/roleStorage", () => ({
   roleStorage: {
-    get: vi.fn(),
+    get: vi.fn(() => "Approver"),
+    set: vi.fn(),
+    remove: vi.fn(),
   },
 }));
 
@@ -49,6 +51,7 @@ describe("ApplicationDetailPage", () => {
   });
 
   test("申請詳細が正しく表示されること", async () => {
+    roleStorage.get = vi.fn().mockReturnValue("Applicant");
     const application: ApplicationDetail = {
       id: 1,
       title: "出張申請",
