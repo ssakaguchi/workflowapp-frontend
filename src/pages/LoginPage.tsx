@@ -11,6 +11,7 @@ import { useState } from "react";
 import { authApi } from "../api/authApi";
 import { tokenStorage } from "../utils/tokenStorage";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { roleStorage } from "../utils/roleStorage";
 
 export function LoginPage() {
   const [loginId, setLoginId] = useState("");
@@ -31,6 +32,10 @@ export function LoginPage() {
 
       // ログイン成功後、JWTを保存して申請一覧ページへ遷移
       tokenStorage.set(result.token);
+
+      // ユーザーロールを保存
+      roleStorage.set(result.role);
+
       navigate("/applications");
     } catch {
       setErrorMessage("ログインに失敗しました。");
