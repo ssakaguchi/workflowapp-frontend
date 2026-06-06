@@ -9,6 +9,8 @@ import ApplicationDetailPage from "../pages/ApplicationDetailPage";
 import type { ApplicationDetail } from "../types/application";
 import userEvent from "@testing-library/user-event";
 import { roleStorage } from "../utils/roleStorage";
+import { getCurrentUser } from "../services/authService";
+import { tokenStorage } from "../utils/tokenStorage";
 
 vi.mock("../api/applicationsApi", () => ({
   getApplicationById: vi.fn(),
@@ -19,9 +21,21 @@ const mockedGetApplicationById = vi.mocked(getApplicationById);
 
 const mockedUpdateApplicationStatus = vi.mocked(updateApplicationStatus);
 
+vi.mock("../services/authService", () => ({
+  getCurrentUser: vi.fn(),
+}));
+
 vi.mock("../utils/roleStorage", () => ({
   roleStorage: {
     get: vi.fn(() => "Approver"),
+    set: vi.fn(),
+    remove: vi.fn(),
+  },
+}));
+
+vi.mock("../utils/tokenStorage", () => ({
+  tokenStorage: {
+    get: vi.fn(() => "mockedToken"),
     set: vi.fn(),
     remove: vi.fn(),
   },
@@ -335,6 +349,77 @@ describe("ApplicationDetailPage", () => {
     await waitFor(() => {
       expect(screen.queryByText("承認")).not.toBeInTheDocument();
       expect(screen.queryByText("却下")).not.toBeInTheDocument();
+    });
+  });
+
+  test("roleが未保存の場合_getCurrentUserからApproverロールを復元しステータス更新ボタンを表示すること", async () => {
+    // arrange
+    vi.mocked(roleStorage.get).mockReturnValue(null); // roleが未保存の状態を再現
+    vi.mocked(roleStorage.set).mockImplementation(() => {}); // roleStorage.setのモック実装（呼び出しを記録するだけ）
+
+    // getCurrentUserのモック実装を追加してApproverロールを返すようにする
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      userId: 1,
+      loginId: "approver01",
+      displayName: "テスト承認者",
+      role: "Approver",
+    });
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+    });
+
+    // act
+    renderComponent();
+
+    // assert
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "承認" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "却下" })).toBeInTheDocument();
+    });
+
+    expect(vi.mocked(getCurrentUser)).toHaveBeenCalled();
+    expect(roleStorage.set).toHaveBeenCalledWith("Approver");
+  });
+
+  test("role復元に失敗した場合_認証情報を削除してログイン画面へ遷移すること", async () => {
+    // arrange
+    vi.mocked(roleStorage.get).mockReturnValue(null); // roleが未保存の状態を再現
+    vi.mocked(tokenStorage.remove).mockImplementation(() => {}); // tokenStorage.removeのモック実装
+    vi.mocked(roleStorage.remove).mockImplementation(() => {}); // roleStorage.removeのモック実装
+    vi.mocked(getCurrentUser).mockRejectedValue(new Error("API error")); // getCurrentUserが失敗するようにする
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+    });
+
+    // act
+    // ログイン画面への遷移を確認するために、MemoryRouterとRoutesでApplicationDetailPageをラップしてレンダリングする
+    render(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+          <Route path="/login" element={<div>ログイン画面</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // assert
+    await waitFor(() => {
+      expect(vi.mocked(getCurrentUser)).toHaveBeenCalled();
+      expect(vi.mocked(tokenStorage.remove)).toHaveBeenCalled();
+      expect(vi.mocked(roleStorage.remove)).toHaveBeenCalled();
+      expect(screen.getByText("ログイン画面")).toBeInTheDocument();
     });
   });
 });
