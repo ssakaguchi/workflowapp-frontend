@@ -20,8 +20,8 @@ import { updateApplicationStatus } from "../api/applicationsApi";
 import { formatDateTime } from "../utils/formatDateTime";
 import { roleStorage } from "../utils/roleStorage";
 import { getCurrentUser } from "../services/authService";
-import type { CurrentUser, UserRole } from "../types/auth";
 import { tokenStorage } from "../utils/tokenStorage";
+import type { UserRole } from "../types/auth";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
