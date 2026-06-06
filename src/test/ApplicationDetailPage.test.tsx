@@ -8,6 +8,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ApplicationDetailPage from "../pages/ApplicationDetailPage";
 import type { ApplicationDetail } from "../types/application";
 import userEvent from "@testing-library/user-event";
+import { roleStorage } from "../utils/roleStorage";
 
 vi.mock("../api/applicationsApi", () => ({
   getApplicationById: vi.fn(),
@@ -17,6 +18,12 @@ vi.mock("../api/applicationsApi", () => ({
 const mockedGetApplicationById = vi.mocked(getApplicationById);
 
 const mockedUpdateApplicationStatus = vi.mocked(updateApplicationStatus);
+
+vi.mock("../utils/roleStorage", () => ({
+  roleStorage: {
+    get: vi.fn(),
+  },
+}));
 
 describe("ApplicationDetailPage", () => {
   beforeEach(() => {
@@ -136,25 +143,8 @@ describe("ApplicationDetailPage", () => {
     expect(screen.getByText("編集画面")).toBeInTheDocument();
   });
 
-  test("申請中のみ承認・却下ボタンが表示されること", async () => {
-    mockedGetApplicationById.mockResolvedValue({
-      id: 1,
-      title: "出張申請",
-      content: "大阪出張",
-      applicantUserId: 1,
-      status: "Pending",
-      createdAt: "2026-01-01T00:00:00Z",
-    });
-
-    renderComponent();
-
-    await waitFor(() => {
-      expect(screen.getByText("承認")).toBeInTheDocument();
-      expect(screen.getByText("却下")).toBeInTheDocument();
-    });
-  });
-
   test("申請中以外は承認・却下ボタンが表示されないこと", async () => {
+    roleStorage.get = vi.fn().mockReturnValue("Approver");
     mockedGetApplicationById.mockResolvedValue({
       id: 1,
       title: "出張申請",
@@ -173,6 +163,7 @@ describe("ApplicationDetailPage", () => {
   });
 
   test("承認ボタンを押すとステータス更新の確認ダイアログが表示されること", async () => {
+    roleStorage.get = vi.fn().mockReturnValue("Approver");
     mockedGetApplicationById.mockResolvedValue({
       id: 1,
       title: "出張申請",
@@ -196,6 +187,7 @@ describe("ApplicationDetailPage", () => {
   });
 
   test("却下ボタンを押すとステータス更新の確認ダイアログが表示されること", async () => {
+    roleStorage.get = vi.fn().mockReturnValue("Approver");
     mockedGetApplicationById.mockResolvedValue({
       id: 1,
       title: "出張申請",
@@ -219,6 +211,7 @@ describe("ApplicationDetailPage", () => {
   });
 
   test("ステータス更新の確認ダイアログで承認を選択するとステータスが更新されること", async () => {
+    roleStorage.get = vi.fn().mockReturnValue("Approver");
     mockedGetApplicationById.mockResolvedValue({
       id: 1,
       title: "出張申請",
@@ -261,6 +254,7 @@ describe("ApplicationDetailPage", () => {
   });
 
   test("ステータス更新失敗時にエラーメッセージが表示されること", async () => {
+    roleStorage.get = vi.fn().mockReturnValue("Approver");
     mockedGetApplicationById.mockResolvedValue({
       id: 1,
       title: "出張申請",
@@ -292,6 +286,52 @@ describe("ApplicationDetailPage", () => {
       expect(
         screen.getByText("ステータスの更新に失敗しました。"),
       ).toBeInTheDocument();
+    });
+  });
+
+  test("申請中かつApproverの場合はステータス更新ボタンが表示されること", async () => {
+    // arrange
+    // roleStorage.getをモックしてApproverを返すようにする
+    roleStorage.get = vi.fn().mockReturnValue("Approver");
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+    });
+
+    // act
+    renderComponent();
+
+    // assert
+    // ステータス更新ボタンが表示されることを確認
+    await waitFor(() => {
+      expect(screen.getByText("承認")).toBeInTheDocument();
+      expect(screen.getByText("却下")).toBeInTheDocument();
+    });
+  });
+
+  test("申請中でもApplicantの場合はステータス更新ボタンが表示されないこと", async () => {
+    // arrange
+    roleStorage.get = vi.fn().mockReturnValue("Applicant");
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+    });
+
+    // act
+    renderComponent();
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByText("承認")).not.toBeInTheDocument();
+      expect(screen.queryByText("却下")).not.toBeInTheDocument();
     });
   });
 });
