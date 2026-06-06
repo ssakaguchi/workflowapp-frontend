@@ -18,6 +18,10 @@ import {
 } from "@mui/material";
 import { updateApplicationStatus } from "../api/applicationsApi";
 import { formatDateTime } from "../utils/formatDateTime";
+import { roleStorage } from "../utils/roleStorage";
+import { getCurrentUser } from "../services/authService";
+import { tokenStorage } from "../utils/tokenStorage";
+import type { UserRole } from "../types/auth";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
@@ -36,7 +40,10 @@ export default function ApplicationDetailPage() {
   const [nextStatus, setNextStatus] = useState<"Approved" | "Rejected" | null>(
     null,
   );
+  const [role, setRole] = useState<UserRole | null>(() => roleStorage.get());
+  const isApprover = role === "Approver";
 
+  // 画面表示時に申請の詳細を取得する
   useEffect(() => {
     const fetchApplication = async () => {
       if (!id) {
@@ -65,6 +72,27 @@ export default function ApplicationDetailPage() {
 
     fetchApplication();
   }, [id]);
+
+  // 画面表示時にユーザーロールを取得して状態にセットする
+  useEffect(() => {
+    const fetchRoleIfNeeded = async () => {
+      if (role) {
+        return;
+      }
+
+      try {
+        const currentUser = await getCurrentUser();
+        roleStorage.set(currentUser.role);
+        setRole(currentUser.role);
+      } catch {
+        tokenStorage.remove();
+        roleStorage.remove();
+        navigate("/login");
+      }
+    };
+
+    fetchRoleIfNeeded();
+  }, [role, navigate]);
 
   // ステータス更新の確認ダイアログを開く関数
   const handleOpenStatusConfirm = (status: "Approved" | "Rejected") => {
@@ -123,7 +151,12 @@ export default function ApplicationDetailPage() {
         申請詳細画面
       </Typography>
 
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="flex-end">
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ mb: 2 }}
+        justifyContent="flex-end"
+      >
         <Button
           type="button"
           variant="outlined"
@@ -144,7 +177,7 @@ export default function ApplicationDetailPage() {
           編集
         </Button>
       </Stack>
-      {application?.status === "Pending" && (
+      {application?.status === "Pending" && isApprover && (
         <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
           <Button
             variant="contained"
@@ -169,7 +202,6 @@ export default function ApplicationDetailPage() {
       {!isLoading && !errorMessage && application && (
         <Paper sx={{ p: 3 }}>
           <Stack spacing={2}>
-
             <Typography>ID: {application.id}</Typography>
             <Typography>タイトル: {application.title}</Typography>
             <Typography>内容: {application.content}</Typography>

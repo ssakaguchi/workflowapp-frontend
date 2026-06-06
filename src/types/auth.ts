@@ -9,18 +9,16 @@ export type RegisterRequest = {
   password: string;
 };
 
+export type UserRole = "Applicant" | "Approver";
+
 export type LoginResponse = {
   token: string;
-};
-
-export type MeResponse = {
-  userId: number;
-  loginId: string;
-  displayName: string;
+  role: UserRole;
 };
 
 export type CurrentUser = {
   userId: number;
   loginId: string;
   displayName: string;
+  role: UserRole;
 };
