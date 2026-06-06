@@ -1,8 +1,9 @@
 import type { UserRole } from "../types/auth";
+const ROLE_KEY = "role";
 
 export const roleStorage = {
   get: (): UserRole | null => {
-    const role = localStorage.getItem("role");
+    const role = localStorage.getItem(ROLE_KEY);
 
     if (role === "Applicant" || role === "Approver") {
       return role;
@@ -12,10 +13,10 @@ export const roleStorage = {
   },
 
   set: (role: UserRole) => {
-    localStorage.setItem("role", role);
+    localStorage.setItem(ROLE_KEY, role);
   },
 
   remove: () => {
-    localStorage.removeItem("role");
+    localStorage.removeItem(ROLE_KEY);
   },
 };
