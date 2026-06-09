@@ -12,6 +12,7 @@ export type ApplicationDetail = {
   status: string;
   applicantUserId: number; // 最終的には使用しない可能性がある
   createdAt: string;
+  approvalSteps: ApprovalStepResponse[];
 };
 
 // 申請の一覧表示やフィルタリングに使用する型
@@ -30,6 +31,14 @@ export type PagedResponse<T> = {
 type ApplicationRequestBase = {
   title: string;
   content: string;
+};
+
+// 承認ステップのレスポンスの型
+export type ApprovalStepResponse = {
+  id: number;
+  stepOrder: number;
+  approverUserId: number;
+  status: string;
 };
 
 // 新規作成と更新で同じフィールドを使用するため、共通の型を定義

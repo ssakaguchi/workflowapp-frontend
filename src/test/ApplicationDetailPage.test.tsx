@@ -73,6 +73,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     };
 
     mockedGetApplicationById.mockResolvedValue(application);
@@ -114,6 +115,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     const user = userEvent.setup();
@@ -141,6 +143,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     const user = userEvent.setup();
@@ -169,6 +172,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Approved", // 承認済み
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     renderComponent();
@@ -188,6 +192,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     const user = userEvent.setup();
@@ -212,6 +217,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     const user = userEvent.setup();
@@ -236,6 +242,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     mockedUpdateApplicationStatus.mockResolvedValue(undefined);
@@ -279,6 +286,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     mockedUpdateApplicationStatus.mockRejectedValue(new Error("API error"));
@@ -317,6 +325,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     // act
@@ -340,6 +349,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     // act
@@ -372,6 +382,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     // act
@@ -401,6 +412,7 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
     });
 
     // act
@@ -420,6 +432,65 @@ describe("ApplicationDetailPage", () => {
       expect(vi.mocked(tokenStorage.remove)).toHaveBeenCalled();
       expect(vi.mocked(roleStorage.remove)).toHaveBeenCalled();
       expect(screen.getByText("ログイン画面")).toBeInTheDocument();
+    });
+  });
+
+  test("申請詳細取得後、承認ルートが表示されること", async () => {
+    // arrange
+    roleStorage.get = vi.fn().mockReturnValue("Approver");
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      // approvalStepsに1件の承認ステップを含める
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
+    });
+
+    // act
+    renderComponent();
+
+    // assert
+    await waitFor(() => {
+      expect(screen.getByText("承認ルート")).toBeInTheDocument();
+      expect(screen.getByText("順番")).toBeInTheDocument();
+      expect(screen.getByText("承認者")).toBeInTheDocument();
+      expect(screen.getByText("ステータス")).toBeInTheDocument();
+      expect(screen.getByText("申請中")).toBeInTheDocument();
+      expect(screen.getByText("1")).toBeInTheDocument();
+      expect(screen.getByText("2")).toBeInTheDocument();
+    });
+  });
+
+  test("ApprovalStepsが空の場合、承認ルート未設定メッセージが表示されること", async () => {
+    // arrange
+    roleStorage.get = vi.fn().mockReturnValue("Approver");
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [], // approvalStepsが空のケース
+    });
+
+    // act
+    renderComponent();
+
+    // assert
+    await waitFor(() => {
+      expect(screen.getByText("承認ルート")).toBeInTheDocument();
+      expect(screen.getByText("承認ルートは未設定です。")).toBeInTheDocument();
     });
   });
 });
