@@ -15,6 +15,11 @@ import {
   Stack,
   Typography,
   Paper,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
 } from "@mui/material";
 import { updateApplicationStatus } from "../api/applicationsApi";
 import { formatDateTime } from "../utils/formatDateTime";
@@ -261,6 +266,41 @@ export default function ApplicationDetailPage() {
         <Alert severity="error" sx={{ mt: 2 }}>
           {statusUpdateError}
         </Alert>
+      )}
+
+      {/* 承認ルートの表示 */}
+      {!isLoading && !errorMessage && application && (
+        <Paper sx={{ p: 3, mt: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            承認ルート
+          </Typography>
+
+          {application?.approvalSteps.length === 0 ? (
+            <Typography color="text.secondary">
+              承認ルートは未設定です。
+            </Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>順番</TableCell>
+                  <TableCell>承認者</TableCell>
+                  <TableCell>ステータス</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {application?.approvalSteps.map((step) => (
+                  <TableRow key={step.id}>
+                    <TableCell>{step.stepOrder}</TableCell>
+                    <TableCell>{step.approverUserId}</TableCell>
+                    <TableCell>{statusLabel(step.status)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Paper>
       )}
     </Container>
   );
