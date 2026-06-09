@@ -47,6 +47,7 @@ export default function ApplicationDetailPage() {
   );
   const [role, setRole] = useState<UserRole | null>(() => roleStorage.get());
   const isApprover = role === "Approver";
+  const approvalSteps = application?.approvalSteps ?? [];
 
   // 画面表示時に申請の詳細を取得する
   useEffect(() => {
@@ -275,7 +276,7 @@ export default function ApplicationDetailPage() {
             承認ルート
           </Typography>
 
-          {application?.approvalSteps.length === 0 ? (
+          {approvalSteps.length === 0 ? (
             <Typography color="text.secondary">
               承認ルートは未設定です。
             </Typography>
@@ -290,7 +291,7 @@ export default function ApplicationDetailPage() {
               </TableHead>
 
               <TableBody>
-                {application?.approvalSteps.map((step) => (
+                {approvalSteps.map((step) => (
                   <TableRow key={step.id}>
                     <TableCell>{step.stepOrder}</TableCell>
                     <TableCell>{step.approverUserId}</TableCell>
