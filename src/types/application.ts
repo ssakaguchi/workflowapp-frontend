@@ -34,7 +34,7 @@ type ApplicationRequestBase = {
 };
 
 // 承認ステップのレスポンスの型
-type ApprovalStepResponse = {
+export type ApprovalStepResponse = {
   id: number;
   stepOrder: number;
   approverUserId: number;
