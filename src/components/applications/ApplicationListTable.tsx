@@ -12,6 +12,7 @@ import { Link as RouterLink } from "react-router-dom";
 
 import type { ApplicationListItem } from "../../types/application";
 import { formatDateTime } from "../../utils/formatDateTime";
+import { statusLabel } from "../../utils/statusLabel";
 
 // 申請一覧のテーブル表示コンポーネント
 type Props = {
@@ -20,20 +21,6 @@ type Props = {
 };
 
 export function ApplicationListTable({ applications, onDelete }: Props) {
-  // ステータスの表示ラベルを返す関数
-  const statusLabel = (status: string) => {
-    switch (status) {
-      case "Pending":
-        return "申請中";
-      case "Approved":
-        return "承認済み";
-      case "Rejected":
-        return "却下";
-      default:
-        return status;
-    }
-  };
-
   // ステータスに応じたChipの色を返す関数
   const statusColor = (
     status: string,

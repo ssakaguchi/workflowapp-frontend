@@ -1,16 +1,7 @@
 import {
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
   Pagination,
-  Select,
   type SelectChangeEvent,
   Stack,
   Typography,
@@ -19,7 +10,9 @@ import { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 import { deleteApplication, getApplications } from "../api/applicationsApi";
+import ApplicationDeleteConfirmDialog from "../components/applications/ApplicationDeleteConfirmDialog";
 import { ApplicationListTable } from "../components/applications/ApplicationListTable";
+import ApplicationStatusFilter from "../components/applications/ApplicationStatusFilter";
 import type { ApplicationListItem, StatusFilter } from "../types/application";
 
 export function ApplicationListPage() {
@@ -56,11 +49,8 @@ export function ApplicationListPage() {
     setDeleteTargetApplication(application);
   };
 
+  // 申請削除の確定処理
   const handleDeleteConfirm = async () => {
-    // エラーメッセージをリセット
-    setErrorMessage("");
-    setIsDeleting(true);
-
     if (deleteTargetApplication === null || isDeleting) {
       return;
     }
@@ -70,6 +60,10 @@ export function ApplicationListPage() {
       setErrorMessage("削除対象の申請IDが不正です。");
       return;
     }
+
+    // エラーメッセージをリセット
+    setErrorMessage("");
+    setIsDeleting(true);
 
     try {
       await deleteApplication(deleteTargetApplication.id);
@@ -108,20 +102,11 @@ export function ApplicationListPage() {
           sx={{ mb: 2 }}
         >
           {/* ステータスフィルタのセレクトボックス */}
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel id="status-filter-label">ステータス</InputLabel>
-            <Select
-              labelId="status-filter-label"
-              value={selectedStatus}
-              label="ステータス"
-              onChange={handleStatusChange}
-            >
-              <MenuItem value="All">すべて</MenuItem>
-              <MenuItem value="Pending">申請中</MenuItem>
-              <MenuItem value="Approved">承認済み</MenuItem>
-              <MenuItem value="Rejected">却下</MenuItem>
-            </Select>
-          </FormControl>
+          <ApplicationStatusFilter
+            selectedStatus={selectedStatus}
+            handleStatusChange={handleStatusChange}
+          />
+
           <Button
             variant="contained"
             component={RouterLink}
@@ -131,10 +116,8 @@ export function ApplicationListPage() {
           </Button>
         </Stack>
       </Box>
-
       {isLoading && <Typography>読み込み中...</Typography>}
       {!isLoading && errorMessage && <Typography>{errorMessage}</Typography>}
-
       {!isLoading && !errorMessage && applications.length === 0 && (
         <Typography>
           {selectedStatus === "All"
@@ -142,7 +125,6 @@ export function ApplicationListPage() {
             : "該当する申請データがありません。"}
         </Typography>
       )}
-
       {/* フィルタリング後のデータがある場合のテーブル表示 */}
       {!isLoading && applications.length > 0 && (
         <ApplicationListTable
@@ -150,7 +132,6 @@ export function ApplicationListPage() {
           onDelete={handleDeleteClick}
         />
       )}
-
       {/* ページネーションの表示は、totalPagesが1より大きい場合に限定する */}
       {totalPages > 1 && (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
@@ -162,33 +143,15 @@ export function ApplicationListPage() {
           />
         </Box>
       )}
-      <Dialog
-        open={deleteTargetApplication !== null}
-        onClose={handleDeleteCancel}
-      >
-        <DialogTitle>申請を削除しますか？</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {deleteTargetApplication
-              ? `「${deleteTargetApplication.title}」を削除してもよろしいですか？`
-              : ""}
-          </DialogContentText>
-        </DialogContent>
 
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} disabled={isDeleting}>
-            キャンセル
-          </Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            color="error"
-            variant="contained"
-            disabled={isDeleting}
-          >
-            削除する
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* 削除確認ダイアログ */}
+      <ApplicationDeleteConfirmDialog
+        open={deleteTargetApplication !== null}
+        applicationTitle={deleteTargetApplication?.title}
+        isDeleting={isDeleting}
+        onCancel={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }
