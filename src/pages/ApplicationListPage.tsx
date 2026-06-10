@@ -55,15 +55,15 @@ export function ApplicationListPage() {
       return;
     }
 
-    // エラーメッセージをリセット
-    setErrorMessage("");
-    setIsDeleting(true);
-
     // idが数値でない場合は処理を中断
     if (!Number.isFinite(deleteTargetApplication.id)) {
       setErrorMessage("削除対象の申請IDが不正です。");
       return;
     }
+
+    // エラーメッセージをリセット
+    setErrorMessage("");
+    setIsDeleting(true);
 
     try {
       await deleteApplication(deleteTargetApplication.id);
