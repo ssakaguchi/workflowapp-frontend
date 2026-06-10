@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { getApplicationById } from "../api/applicationsApi";
 import { updateApplicationStatus } from "../api/applicationsApi";
-import ApplicationActionButtons from "../components/applications/ApplicationActionButtons";
+import ApprovalActionButtons from "../components/applications/ApprovalActionButtons";
 import ApplicationDetailInfo from "../components/applications/ApplicationDetailInfo";
 import ApplicationStatusConfirmDialog from "../components/applications/ApplicationStatusConfirmDialog";
 import ApprovalRouteTable from "../components/applications/ApprovalRouteTable";
@@ -163,7 +163,7 @@ export default function ApplicationDetailPage() {
           <ApplicationDetailInfo application={application} />
 
           {application.status === "Pending" && isApprover && (
-            <ApplicationActionButtons
+            <ApprovalActionButtons
               onOpenStatusConfirm={handleOpenStatusConfirm}
               isStatusUpdating={isStatusUpdating}
             />

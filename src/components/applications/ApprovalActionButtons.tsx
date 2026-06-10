@@ -1,16 +1,16 @@
 import { Box, Button } from "@mui/material";
 
 // 申請の承認・却下ボタンコンポーネント
-type ApplicationActionStatus = "Approved" | "Rejected";
+type ApprovalActionStatus = "Approved" | "Rejected";
 
 // ApplicationDetailPageから切り出した申請の承認・却下ボタンコンポーネント
 interface ApprovalActionButtons {
-  onOpenStatusConfirm: (status: ApplicationActionStatus) => void;
+  onOpenStatusConfirm: (status: ApprovalActionStatus) => void;
   isStatusUpdating: boolean;
 }
 
 // 申請の承認・却下ボタンコンポーネント
-const ApplicationActionButtons = ({
+const ApprovalActionButtons = ({
   onOpenStatusConfirm,
   isStatusUpdating,
 }: ApprovalActionButtons) => {
@@ -36,4 +36,4 @@ const ApplicationActionButtons = ({
   );
 };
 
-export default ApplicationActionButtons;
+export default ApprovalActionButtons;
