@@ -1,32 +1,18 @@
-import { useNavigate, useParams } from "react-router-dom";
-import type { ApplicationDetail } from "../types/application";
+import { Alert, Button, Container, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+
 import { getApplicationById } from "../api/applicationsApi";
-import {
-  Box,
-  Button,
-  Container,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Alert,
-  Stack,
-  Typography,
-  Paper,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@mui/material";
 import { updateApplicationStatus } from "../api/applicationsApi";
-import { formatDateTime } from "../utils/formatDateTime";
-import { roleStorage } from "../utils/roleStorage";
+import ApplicationActionButtons from "../components/applications/ApplicationActionButtons";
+import ApplicationDetailInfo from "../components/applications/ApplicationDetailInfo";
+import ApplicationStatusConfirmDialog from "../components/applications/ApplicationStatusConfirmDialog";
+import ApprovalRouteTable from "../components/applications/ApprovalRouteTable";
 import { getCurrentUser } from "../services/authService";
-import { tokenStorage } from "../utils/tokenStorage";
+import type { ApplicationDetail } from "../types/application";
 import type { UserRole } from "../types/auth";
+import { roleStorage } from "../utils/roleStorage";
+import { tokenStorage } from "../utils/tokenStorage";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
@@ -106,20 +92,6 @@ export default function ApplicationDetailPage() {
     setStatusConfirmOpen(true);
   };
 
-  // ステータスの表示ラベルを返す関数
-  const statusLabel = (status: string) => {
-    switch (status) {
-      case "Pending":
-        return "申請中";
-      case "Approved":
-        return "承認済み";
-      case "Rejected":
-        return "却下";
-      default:
-        return status;
-    }
-  };
-
   // ステータス更新を実行する関数
   const handleConfirmStatusUpdate = async () => {
     if (isStatusUpdating) {
@@ -156,7 +128,6 @@ export default function ApplicationDetailPage() {
       <Typography variant="h5" component="h1" gutterBottom>
         申請詳細画面
       </Typography>
-
       <Stack
         direction="row"
         spacing={1}
@@ -183,81 +154,33 @@ export default function ApplicationDetailPage() {
           編集
         </Button>
       </Stack>
-      {application?.status === "Pending" && isApprover && (
-        <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => handleOpenStatusConfirm("Approved")}
-            disabled={isStatusUpdating}
-          >
-            承認
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => handleOpenStatusConfirm("Rejected")}
-            disabled={isStatusUpdating}
-          >
-            却下
-          </Button>
-        </Box>
-      )}
+
       {isLoading && <p>読み込み中...</p>}
       {!isLoading && errorMessage && <p>{errorMessage}</p>}
+
       {!isLoading && !errorMessage && application && (
-        <Paper sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Typography>ID: {application.id}</Typography>
-            <Typography>タイトル: {application.title}</Typography>
-            <Typography>内容: {application.content}</Typography>
-            <Typography>
-              ステータス: {statusLabel(application.status)}
-            </Typography>
-            <Typography>
-              作成日時: {formatDateTime(application.createdAt)}
-            </Typography>
-          </Stack>
-        </Paper>
+        <>
+          <ApplicationDetailInfo application={application} />
+
+          {application.status === "Pending" && isApprover && (
+            <ApplicationActionButtons
+              onOpenStatusConfirm={handleOpenStatusConfirm}
+              isStatusUpdating={isStatusUpdating}
+            />
+          )}
+
+          {/* 承認ルートの表示 */}
+          <ApprovalRouteTable approvalSteps={approvalSteps} />
+        </>
       )}
-
       {/* ステータス更新の確認ダイアログ */}
-      <Dialog
+      <ApplicationStatusConfirmDialog
         open={statusConfirmOpen}
+        nextStatus={nextStatus}
+        isStatusUpdating={isStatusUpdating}
         onClose={() => setStatusConfirmOpen(false)}
-      >
-        <DialogTitle>
-          {nextStatus === "Approved"
-            ? "申請を承認しますか？"
-            : "申請を却下しますか？"}
-        </DialogTitle>
-
-        <DialogContent>
-          <DialogContentText>
-            {nextStatus === "Approved"
-              ? "この申請を承認済みに変更します。よろしいですか？"
-              : "この申請を却下します。よろしいですか？"}
-          </DialogContentText>
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            onClick={() => setStatusConfirmOpen(false)}
-            disabled={isStatusUpdating}
-          >
-            キャンセル
-          </Button>
-
-          <Button
-            onClick={handleConfirmStatusUpdate}
-            color={nextStatus === "Approved" ? "success" : "error"}
-            variant="contained"
-            disabled={isStatusUpdating}
-          >
-            {isStatusUpdating ? "更新中..." : "実行する"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleConfirmStatusUpdate}
+      />
       {statusUpdateMessage && (
         <Alert severity="success" sx={{ mt: 2 }}>
           {statusUpdateMessage}
@@ -267,41 +190,6 @@ export default function ApplicationDetailPage() {
         <Alert severity="error" sx={{ mt: 2 }}>
           {statusUpdateError}
         </Alert>
-      )}
-
-      {/* 承認ルートの表示 */}
-      {!isLoading && !errorMessage && application && (
-        <Paper sx={{ p: 3, mt: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            承認ルート
-          </Typography>
-
-          {approvalSteps.length === 0 ? (
-            <Typography color="text.secondary">
-              承認ルートは未設定です。
-            </Typography>
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>順番</TableCell>
-                  <TableCell>承認者</TableCell>
-                  <TableCell>ステータス</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {approvalSteps.map((step) => (
-                  <TableRow key={step.id}>
-                    <TableCell>{step.stepOrder}</TableCell>
-                    <TableCell>{step.approverUserId}</TableCell>
-                    <TableCell>{statusLabel(step.status)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Paper>
       )}
     </Container>
   );
