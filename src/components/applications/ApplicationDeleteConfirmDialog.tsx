@@ -1,3 +1,4 @@
+import type { DialogProps } from "@mui/material";
 import {
   Button,
   Dialog,
@@ -7,42 +8,51 @@ import {
   DialogTitle,
 } from "@mui/material";
 
-import type { ApplicationListItem } from "../../types/application";
-
 type ApplicationDeleteConfirmDialogProps = {
-  deleteTargetApplication: ApplicationListItem | null;
+  open: boolean;
+  applicationTitle?: string;
   isDeleting: boolean;
-  handleDeleteCancel: () => void;
-  handleDeleteConfirm: () => void;
+  onCancel: () => void;
+  onConfirm: () => void;
 };
 
 // 申請削除の確認ダイアログコンポーネント
 const ApplicationDeleteConfirmDialog = ({
-  deleteTargetApplication,
+  open,
+  applicationTitle,
   isDeleting,
-  handleDeleteCancel,
-  handleDeleteConfirm,
+  onCancel,
+  onConfirm,
 }: ApplicationDeleteConfirmDialogProps) => {
+  const handleClose: DialogProps["onClose"] = (_event, reason) => {
+    // 削除処理中は、バックドロップクリックやエスケープキーでのダイアログ閉鎖を無効化
+    if (
+      isDeleting &&
+      (reason === "backdropClick" || reason === "escapeKeyDown")
+    ) {
+      return;
+    }
+
+    onCancel();
+  };
+
   return (
-    <Dialog
-      open={deleteTargetApplication !== null}
-      onClose={handleDeleteCancel}
-    >
+    <Dialog open={open} onClose={handleClose}>
       <DialogTitle>申請を削除しますか？</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          {deleteTargetApplication
-            ? `「${deleteTargetApplication.title}」を削除してもよろしいですか？`
+          {applicationTitle
+            ? `「${applicationTitle}」を削除してもよろしいですか？`
             : ""}
         </DialogContentText>
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleDeleteCancel} disabled={isDeleting}>
+        <Button onClick={onCancel} disabled={isDeleting}>
           キャンセル
         </Button>
         <Button
-          onClick={handleDeleteConfirm}
+          onClick={onConfirm}
           color="error"
           variant="contained"
           disabled={isDeleting}

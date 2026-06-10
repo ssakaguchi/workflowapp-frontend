@@ -146,10 +146,11 @@ export function ApplicationListPage() {
 
       {/* 削除確認ダイアログ */}
       <ApplicationDeleteConfirmDialog
-        deleteTargetApplication={deleteTargetApplication}
+        open={deleteTargetApplication !== null}
+        applicationTitle={deleteTargetApplication?.title}
         isDeleting={isDeleting}
-        handleDeleteCancel={handleDeleteCancel}
-        handleDeleteConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
       />
     </div>
   );
