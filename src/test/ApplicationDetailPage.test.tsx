@@ -1,15 +1,16 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+
 import {
   getApplicationById,
   updateApplicationStatus,
 } from "../api/applicationsApi";
-import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ApplicationDetailPage from "../pages/ApplicationDetailPage";
-import type { ApplicationDetail } from "../types/application";
-import userEvent from "@testing-library/user-event";
-import { roleStorage } from "../utils/roleStorage";
 import { getCurrentUser } from "../services/authService";
+import type { ApplicationDetail } from "../types/application";
+import { roleStorage } from "../utils/roleStorage";
 import { tokenStorage } from "../utils/tokenStorage";
 
 vi.mock("../api/applicationsApi", () => ({

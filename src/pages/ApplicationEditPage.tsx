@@ -1,7 +1,8 @@
+import { Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import { getApplicationById, updateApplication } from "../api/applicationsApi";
-import { Button, TextField, Typography, Container, Stack } from "@mui/material";
 
 export default function ApplicationEditPage() {
   const { id } = useParams();

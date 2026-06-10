@@ -1,9 +1,10 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, test, vi } from "vitest";
+
 import { ApplicationListTable } from "../components/applications/ApplicationListTable";
 import type { ApplicationListItem } from "../types/application";
-import userEvent from "@testing-library/user-event";
 
 // 申請一覧のテーブル表示に関するテスト
 describe("ApplicationListTable", () => {

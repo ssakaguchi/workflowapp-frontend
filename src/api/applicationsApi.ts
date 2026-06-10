@@ -1,10 +1,10 @@
 import type {
   ApplicationDetail,
   ApplicationListItem,
-  UpdateApplicationRequest,
   CreateApplicationRequest,
   PagedResponse,
   StatusFilter,
+  UpdateApplicationRequest,
 } from "../types/application";
 import apiClient from "./apiClient";
 
