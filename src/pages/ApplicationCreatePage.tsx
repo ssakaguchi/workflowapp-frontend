@@ -1,7 +1,8 @@
+import { Button, Container, Stack, TextField,Typography } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { createApplication } from "../api/applicationsApi";
-import { Container, Typography, Button, Stack, TextField } from "@mui/material";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();

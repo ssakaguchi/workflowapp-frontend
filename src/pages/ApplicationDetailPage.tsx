@@ -4,9 +4,9 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { getApplicationById } from "../api/applicationsApi";
 import { updateApplicationStatus } from "../api/applicationsApi";
-import ApprovalActionButtons from "../components/applications/ApprovalActionButtons";
 import ApplicationDetailInfo from "../components/applications/ApplicationDetailInfo";
 import ApplicationStatusConfirmDialog from "../components/applications/ApplicationStatusConfirmDialog";
+import ApprovalActionButtons from "../components/applications/ApprovalActionButtons";
 import ApprovalRouteTable from "../components/applications/ApprovalRouteTable";
 import { getCurrentUser } from "../services/authService";
 import type { ApplicationDetail } from "../types/application";

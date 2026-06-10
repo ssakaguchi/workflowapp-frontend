@@ -1,10 +1,11 @@
-import { logout } from "../../utils/logout";
 import AppBar from "@mui/material/AppBar";
+import Button from "@mui/material/Button";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
+
 import { isAuthenticated } from "../../utils/auth";
+import { logout } from "../../utils/logout";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();

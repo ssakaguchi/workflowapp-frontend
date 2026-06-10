@@ -1,6 +1,7 @@
-import { Navigate } from "react-router-dom";
-import { isAuthenticated } from "../../utils/auth";
 import type { JSX } from "@emotion/react/jsx-runtime";
+import { Navigate } from "react-router-dom";
+
+import { isAuthenticated } from "../../utils/auth";
 
 type PublicRouteProps = {
   children: JSX.Element;

@@ -1,14 +1,15 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { LoginPage } from "./pages/LoginPage";
+
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import RegisterPage from "./pages/RegisterPage";
 import PublicRoute from "./components/auth/PublicRoute";
-import DashboardPage from "./pages/DashboardPage";
 import Header from "./components/layout/Header";
-import { ApplicationListPage } from "./pages/ApplicationListPage";
+import ApplicationCreatePage from "./pages/ApplicationCreatePage";
 import ApplicationDetailPage from "./pages/ApplicationDetailPage";
 import ApplicationEditPage from "./pages/ApplicationEditPage";
-import ApplicationCreatePage from "./pages/ApplicationCreatePage";
+import { ApplicationListPage } from "./pages/ApplicationListPage";
+import DashboardPage from "./pages/DashboardPage";
+import { LoginPage } from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 // ルーティングの設定を行うコンポーネント
 function App() {

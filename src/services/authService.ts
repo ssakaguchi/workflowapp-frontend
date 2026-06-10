@@ -1,6 +1,7 @@
 import axios from "axios";
-import { getToken } from "../utils/auth";
+
 import type { CurrentUser } from "../types/auth";
+import { getToken } from "../utils/auth";
 
 const API_BASE_URL = "http://localhost:5071";
 

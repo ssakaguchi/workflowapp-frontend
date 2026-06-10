@@ -8,8 +8,9 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import type { ApplicationListItem } from "../../types/application";
 import { Link as RouterLink } from "react-router-dom";
+
+import type { ApplicationListItem } from "../../types/application";
 import { formatDateTime } from "../../utils/formatDateTime";
 
 // 申請一覧のテーブル表示コンポーネント

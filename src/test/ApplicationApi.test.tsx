@@ -1,11 +1,12 @@
+import type { AxiosResponse } from "axios";
 import { afterEach, describe, expect, test, vi } from "vitest";
+
 import apiClient from "../api/apiClient";
 import {
+  createApplication,
   deleteApplication,
   updateApplication,
-  createApplication,
 } from "../api/applicationsApi";
-import type { AxiosResponse } from "axios";
 import type { UpdateApplicationRequest } from "../types/application";
 
 describe("Application API", () => {

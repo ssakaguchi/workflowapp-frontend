@@ -1,5 +1,6 @@
-import { Navigate } from "react-router-dom";
 import type { JSX } from "@emotion/react/jsx-runtime";
+import { Navigate } from "react-router-dom";
+
 import { isAuthenticated } from "../../utils/auth";
 
 // ProtectedRouteコンポーネントのプロパティの型定義

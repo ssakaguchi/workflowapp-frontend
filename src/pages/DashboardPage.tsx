@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
@@ -8,6 +7,8 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { useEffect, useState } from "react";
+
 import { getCurrentUser } from "../services/authService";
 import type { CurrentUser } from "../types/auth";
 

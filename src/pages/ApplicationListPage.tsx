@@ -1,25 +1,26 @@
-import { useEffect, useState } from "react";
-import { deleteApplication, getApplications } from "../api/applicationsApi";
-import type { ApplicationListItem, StatusFilter } from "../types/application";
-import { ApplicationListTable } from "../components/applications/ApplicationListTable";
 import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   InputLabel,
   MenuItem,
-  Select,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
   Pagination,
-  Typography,
-  Box,
-  Stack,
+  Select,
   type SelectChangeEvent,
+  Stack,
+  Typography,
 } from "@mui/material";
+import { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
+
+import { deleteApplication, getApplications } from "../api/applicationsApi";
+import { ApplicationListTable } from "../components/applications/ApplicationListTable";
+import type { ApplicationListItem, StatusFilter } from "../types/application";
 
 export function ApplicationListPage() {
   const PAGE_SIZE = 10;

@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+import { getApplicationById, updateApplication } from "../api/applicationsApi";
 import ApplicationEditPage from "../pages/ApplicationEditPage";
 import type { ApplicationDetail } from "../types/application";
-import userEvent from "@testing-library/user-event";
-import { getApplicationById, updateApplication } from "../api/applicationsApi";
 
 // applicationsApiをモックする
 vi.mock("../api/applicationsApi", () => ({
