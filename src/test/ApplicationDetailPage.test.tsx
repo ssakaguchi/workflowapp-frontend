@@ -466,8 +466,8 @@ describe("ApplicationDetailPage", () => {
       expect(screen.getByText("承認者")).toBeInTheDocument();
       expect(screen.getByText("ステータス")).toBeInTheDocument();
       expect(screen.getByText("申請中")).toBeInTheDocument();
-      expect(screen.getByText("1")).toBeInTheDocument();
-      expect(screen.getByText("2")).toBeInTheDocument();
+      expect(screen.getByRole("cell", { name: "1" })).toBeInTheDocument();
+      expect(screen.getByRole("cell", { name: "2" })).toBeInTheDocument();
     });
   });
 
