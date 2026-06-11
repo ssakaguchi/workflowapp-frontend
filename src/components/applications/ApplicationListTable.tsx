@@ -11,8 +11,11 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 
 import type { ApplicationListItem } from "../../types/application";
+import {
+  applicationStatusColors,
+  getApplicationStatusLabel,
+} from "../../utils/applicationStatus";
 import { formatDateTime } from "../../utils/formatDateTime";
-import { statusLabel } from "../../utils/statusLabel";
 
 // 申請一覧のテーブル表示コンポーネント
 type Props = {
@@ -21,22 +24,6 @@ type Props = {
 };
 
 export function ApplicationListTable({ applications, onDelete }: Props) {
-  // ステータスに応じたChipの色を返す関数
-  const statusColor = (
-    status: string,
-  ): "default" | "success" | "error" | "warning" => {
-    switch (status) {
-      case "Pending":
-        return "warning";
-      case "Approved":
-        return "success";
-      case "Rejected":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
   return (
     <Table>
       <TableHead>
@@ -55,8 +42,8 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
             <TableCell>{application.title}</TableCell>
             <TableCell>
               <Chip
-                label={statusLabel(application.status)}
-                color={statusColor(application.status)}
+                label={getApplicationStatusLabel(application.status)}
+                color={applicationStatusColors[application.status]}
                 size="small"
               />
             </TableCell>

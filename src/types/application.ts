@@ -1,7 +1,7 @@
 export type ApplicationListItem = {
   id: number;
   title: string;
-  status: string;
+  status: ApplicationStatus;
   createdAt: string;
 };
 
@@ -9,14 +9,15 @@ export type ApplicationDetail = {
   id: number;
   title: string;
   content: string;
-  status: string;
+  status: ApplicationStatus;
   applicantUserId: number; // 最終的には使用しない可能性がある
   createdAt: string;
   approvalSteps: ApprovalStepResponse[];
 };
 
 // 申請の一覧表示やフィルタリングに使用する型
-export type StatusFilter = "All" | "Pending" | "Approved" | "Rejected";
+export type ApplicationStatus = "Pending" | "Approved" | "Rejected";
+export type StatusFilter = "All" | ApplicationStatus;
 
 // ページネーションされた結果を表す型
 export type PagedResponse<T> = {
@@ -38,7 +39,7 @@ export type ApprovalStepResponse = {
   id: number;
   stepOrder: number;
   approverUserId: number;
-  status: string;
+  status: ApplicationStatus;
 };
 
 // 新規作成と更新で同じフィールドを使用するため、共通の型を定義

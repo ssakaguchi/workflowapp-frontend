@@ -1,8 +1,8 @@
-import { Paper,Stack, Typography } from "@mui/material";
+import { Paper, Stack, Typography } from "@mui/material";
 
 import type { ApplicationDetail } from "../../types/application";
+import { getApplicationStatusLabel } from "../../utils/applicationStatus";
 import { formatDateTime } from "../../utils/formatDateTime";
-import { statusLabel } from "../../utils/statusLabel";
 
 const ApplicationDetailInfo = ({
   application,
@@ -15,7 +15,9 @@ const ApplicationDetailInfo = ({
         <Typography>ID: {application.id}</Typography>
         <Typography>タイトル: {application.title}</Typography>
         <Typography>内容: {application.content}</Typography>
-        <Typography>ステータス: {statusLabel(application.status)}</Typography>
+        <Typography>
+          ステータス: {getApplicationStatusLabel(application.status)}
+        </Typography>
         <Typography>
           作成日時: {formatDateTime(application.createdAt)}
         </Typography>

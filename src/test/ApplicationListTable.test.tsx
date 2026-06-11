@@ -12,13 +12,13 @@ describe("ApplicationListTable", () => {
     {
       id: 1,
       title: "出張申請",
-      status: "申請中",
+      status: "Pending",
       createdAt: "2026-01-01T12:00:00Z",
     },
     {
       id: 2,
       title: "備品購入申請",
-      status: "承認済み",
+      status: "Approved",
       createdAt: "2026-01-03T12:00:00Z",
     },
   ];
@@ -70,7 +70,7 @@ describe("ApplicationListTable", () => {
             {
               id: 1,
               title: "出張申請",
-              status: "申請中",
+              status: "Pending",
               createdAt: "2026-01-01T12:00:00Z",
             },
           ]}
