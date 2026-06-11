@@ -9,7 +9,7 @@ export const applicationStatusLabels: Record<ApplicationStatus, string> = {
   Rejected: "却下",
 };
 
-// ステータスに応じたChipの色を返す関数
+// ステータスに応じたChipの色を定義
 export const applicationStatusColors: Record<
   ApplicationStatus,
   ChipProps["color"]
