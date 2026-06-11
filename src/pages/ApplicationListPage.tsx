@@ -15,9 +15,9 @@ import { ApplicationListTable } from "../components/applications/ApplicationList
 import ApplicationStatusFilter from "../components/applications/ApplicationStatusFilter";
 import type { ApplicationListItem, StatusFilter } from "../types/application";
 
-export function ApplicationListPage() {
-  const PAGE_SIZE = 10;
+const PAGE_SIZE = 10;
 
+export function ApplicationListPage() {
   const [page, setPage] = useState(1);
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +43,7 @@ export function ApplicationListPage() {
     };
 
     fetchApplications();
-  }, [page, PAGE_SIZE, selectedStatus]);
+  }, [page, selectedStatus]);
 
   const handleDeleteClick = (application: ApplicationListItem) => {
     setDeleteTargetApplication(application);

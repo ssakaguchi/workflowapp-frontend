@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 
 import type { ApprovalStepResponse } from "../../types/application";
-import { statusLabel } from "../../utils/statusLabel";
+import { getApplicationStatusLabel } from "../../utils/applicationStatus";
 
 const ApprovalRouteTable: React.FC<{
   approvalSteps: ApprovalStepResponse[];
@@ -37,7 +37,7 @@ const ApprovalRouteTable: React.FC<{
               <TableRow key={step.id}>
                 <TableCell>{step.stepOrder}</TableCell>
                 <TableCell>{step.approverUserId}</TableCell>
-                <TableCell>{statusLabel(step.status)}</TableCell>
+                <TableCell>{getApplicationStatusLabel(step.status)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
