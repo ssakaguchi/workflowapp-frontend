@@ -366,10 +366,7 @@ npm run dev
 npm run build
 ```
 
-# WorkflowApp Frontend
-
-![CI](https://github.com/ssakaguchi/workflowapp-frontend/actions/workflows/ci.yml/badge.svg)
-
+[![CI](https://github.com/ssakaguchi/workflowapp-frontend/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ssakaguchi/workflowapp-frontend/actions/workflows/ci.yml)
 ---
 
 ## 今後の実装候補
