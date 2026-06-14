@@ -49,6 +49,7 @@ describe("Application API", () => {
     const request = {
       title: "新規申請タイトル",
       content: "新規申請内容",
+      approverUserId: 2,
     };
 
     await createApplication(request);

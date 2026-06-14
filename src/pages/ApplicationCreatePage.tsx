@@ -1,8 +1,11 @@
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { createApplication } from "../api/applicationsApi";
+import { getApprovers } from "../api/usersApi";
+import ApproverSelectBox from "../components/users/ApproverSelectBox";
+import type { Approver } from "../types/application";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
@@ -13,6 +16,10 @@ export default function ApplicationCreatePage() {
   const [titleError, setTitleError] = useState("");
   const [contentError, setContentError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  const [approvers, setApprovers] = useState<Approver[]>([]);
+  const [selectedApproverUserId, setSelectedApproverUserId] = useState("");
+  const [approverError, setApproverError] = useState("");
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,6 +39,11 @@ export default function ApplicationCreatePage() {
       hasError = true;
     }
 
+    if (!selectedApproverUserId) {
+      setApproverError("承認者を選択してください。");
+      hasError = true;
+    }
+
     if (hasError) {
       return;
     }
@@ -42,6 +54,7 @@ export default function ApplicationCreatePage() {
       await createApplication({
         title: title.trim(),
         content: content.trim(),
+        approverUserId: Number(selectedApproverUserId),
       });
 
       navigate(`/applications`);
@@ -52,12 +65,31 @@ export default function ApplicationCreatePage() {
     }
   };
 
+  // 承認者の一覧を取得してセレクトボックスに表示するための処理
+  useEffect(() => {
+    const fetchApprovers = async () => {
+      try {
+        const result = await getApprovers();
+        setApprovers(result);
+      } catch {
+        setApproverError("承認者一覧の取得に失敗しました。");
+      }
+    };
+
+    fetchApprovers();
+  }, [navigate]);
+
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
       <Typography variant="h5" component="h1" gutterBottom>
         申請作成画面
       </Typography>
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} justifyContent="flex-end">
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ mb: 2 }}
+        justifyContent="flex-end"
+      >
         <Button
           type="button"
           variant="outlined"
@@ -69,7 +101,7 @@ export default function ApplicationCreatePage() {
         </Button>
       </Stack>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <div style={{ marginBottom: "12px" }}>
           <TextField
             id="title"
@@ -108,6 +140,16 @@ export default function ApplicationCreatePage() {
 
           {errorMessage && <p role="alert">{errorMessage}</p>}
 
+          {/* 承認者選択のセレクトボックスコンポーネント */}
+          <ApproverSelectBox
+            approvers={approvers}
+            selectedApproverUserId={selectedApproverUserId}
+            setSelectedApproverUserId={(userId) => {
+              setSelectedApproverUserId(userId);
+              setApproverError("");
+            }}
+            approverError={approverError}
+          />
           <Button type="submit" variant="contained" disabled={isSubmitting}>
             {isSubmitting ? "申請中..." : "申請"}
           </Button>
