@@ -28,8 +28,15 @@ export type PagedResponse<T> = {
   totalPages: number;
 };
 
-// 申請の新規作成や更新に使用するリクエストの型
+// 申請の新規作成に使用するリクエストの型
 type ApplicationRequestBase = {
+  title: string;
+  content: string;
+  approverUserId: number;
+};
+
+// 申請の更新に使用するリクエストの型
+type ApplicationUpdateRequestBase = {
   title: string;
   content: string;
 };
@@ -42,6 +49,14 @@ export type ApprovalStepResponse = {
   status: ApplicationStatus;
 };
 
-// 新規作成と更新で同じフィールドを使用するため、共通の型を定義
+// 承認者の情報を表す型
+export type Approver = {
+  userId: number;
+  displayName: string;
+};
+
+// 申請作成時は承認者IDを含める
 export type CreateApplicationRequest = ApplicationRequestBase;
-export type UpdateApplicationRequest = ApplicationRequestBase;
+
+// 申請更新時はタイトルと内容のみ更新する
+export type UpdateApplicationRequest = ApplicationUpdateRequestBase;

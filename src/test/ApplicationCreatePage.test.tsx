@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { createApplication } from "../api/applicationsApi";
+import { getApprovers } from "../api/usersApi";
 import ApplicationCreatePage from "../pages/ApplicationCreatePage";
 
 // applicationsApiをモックする
@@ -11,13 +12,25 @@ vi.mock("../api/applicationsApi", () => ({
   createApplication: vi.fn(),
 }));
 
+vi.mock("../api/usersApi", () => ({
+  getApprovers: vi.fn(),
+}));
+
 const mockedCreateApplication = vi.mocked(createApplication);
+const mockedGetApprovers = vi.mocked(getApprovers);
 
 // 申請作成ページに関するテスト
 describe("ApplicationCreatePage", () => {
   // 各テスト前にモックの状態をリセットして、テスト間の干渉を防止する
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockedGetApprovers.mockResolvedValue([
+      {
+        userId: 1,
+        displayName: "承認者ユーザー",
+      },
+    ]);
   });
 
   // 各テスト後にモックを完全にリセットして、次のテストに影響を与えないようにする
@@ -37,10 +50,11 @@ describe("ApplicationCreatePage", () => {
     );
   }
 
-  test("タイトル・内容入力欄が表示されていること", () => {
+  test("タイトル・内容入力欄・承認者選択欄が表示されていること", () => {
     const { getByLabelText } = renderComponent();
     expect(getByLabelText("タイトル")).toBeInTheDocument();
     expect(getByLabelText("内容")).toBeInTheDocument();
+    expect(getByLabelText("承認者 *")).toBeInTheDocument();
   });
 
   test("タイトルが未入力の場合、エラーメッセージを表示して作成APIを呼び出さないこと", async () => {
@@ -50,7 +64,16 @@ describe("ApplicationCreatePage", () => {
     renderComponent();
 
     const titleInput = await screen.findByLabelText("タイトル");
+
+    const approverSelect = await screen.findByRole("combobox", {
+      name: /承認者/,
+    });
+    await user.click(approverSelect);
+
+    await user.click(screen.getByRole("option", { name: "承認者ユーザー" }));
+
     const submitButton = screen.getByRole("button", { name: "申請" });
+
     await user.clear(titleInput);
 
     // act
@@ -60,6 +83,7 @@ describe("ApplicationCreatePage", () => {
     expect(
       await screen.findByText("タイトルを入力してください。"),
     ).toBeInTheDocument();
+
     expect(mockedCreateApplication).not.toHaveBeenCalled();
   });
 
@@ -71,6 +95,12 @@ describe("ApplicationCreatePage", () => {
 
     const titleInput = await screen.findByLabelText("タイトル");
     const contentInput = await screen.findByLabelText("内容");
+    const approverSelect = await screen.findByRole("combobox", {
+      name: /承認者/,
+    });
+    await user.click(approverSelect);
+    await user.click(screen.getByRole("option", { name: "承認者ユーザー" }));
+
     const submitButton = screen.getByRole("button", { name: "申請" });
 
     await user.type(titleInput, "新規申請タイトル");
@@ -105,6 +135,16 @@ describe("ApplicationCreatePage", () => {
     await user.clear(contentInput);
     await user.type(contentInput, "新規申請内容");
 
+    const approverSelect = await screen.findByLabelText("承認者 *");
+
+    await user.click(approverSelect);
+
+    const approverOption = await screen.findByRole("option", {
+      name: "承認者ユーザー",
+    });
+
+    await user.click(approverOption);
+
     const submitButton = await screen.findByRole("button", { name: "申請" });
 
     // act
@@ -114,6 +154,7 @@ describe("ApplicationCreatePage", () => {
     expect(mockedCreateApplication).toHaveBeenCalledWith({
       title: "新規申請タイトル",
       content: "新規申請内容",
+      approverUserId: 1,
     });
 
     expect(await screen.findByText("申請一覧")).toBeInTheDocument();
@@ -129,12 +170,21 @@ describe("ApplicationCreatePage", () => {
 
     const titleInput = await screen.findByLabelText("タイトル");
     const contentInput = await screen.findByLabelText("内容");
+    const approverSelect = await screen.findByLabelText("承認者 *");
 
     await user.clear(titleInput);
     await user.type(titleInput, "新規申請タイトル");
 
     await user.clear(contentInput);
     await user.type(contentInput, "新規申請内容");
+
+    await user.click(approverSelect);
+
+    const approverOption = await screen.findByRole("option", {
+      name: "承認者ユーザー",
+    });
+
+    await user.click(approverOption);
 
     const submitButton = await screen.findByRole("button", { name: "申請" });
 
@@ -146,6 +196,7 @@ describe("ApplicationCreatePage", () => {
     expect(mockedCreateApplication).toHaveBeenCalledWith({
       title: "新規申請タイトル",
       content: "新規申請内容",
+      approverUserId: 1,
     });
 
     // エラーメッセージが表示されることを確認
@@ -184,11 +235,33 @@ describe("ApplicationCreatePage", () => {
 
     await user.type(screen.getByLabelText("タイトル"), "新規申請タイトル");
     await user.type(screen.getByLabelText("内容"), "新規申請内容");
+    await user.click(screen.getByLabelText("承認者 *"));
+    await user.click(screen.getByRole("option", { name: "承認者ユーザー" }));
 
     // act
     await user.click(screen.getByRole("button", { name: "申請" }));
 
     // assert
     expect(screen.getByRole("button", { name: "一覧へ戻る" })).toBeDisabled();
+  });
+
+  test("承認者が未選択の場合、エラーメッセージを表示して作成APIを呼び出さないこと", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.type(screen.getByLabelText("タイトル"), "新規申請タイトル");
+    await user.type(screen.getByLabelText("内容"), "新規申請内容");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "申請" }));
+
+    // assert
+    expect(
+      await screen.findByText("承認者を選択してください。"),
+    ).toBeInTheDocument();
+
+    expect(mockedCreateApplication).not.toHaveBeenCalled();
   });
 });
