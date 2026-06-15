@@ -18,7 +18,9 @@ export default function ApplicationCreatePage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [approvers, setApprovers] = useState<Approver[]>([]);
-  const [selectedApproverUserId, setSelectedApproverUserId] = useState("");
+  const [selectedApproverUserId, setSelectedApproverUserId] = useState<
+    number | undefined
+  >(undefined);
   const [approverError, setApproverError] = useState("");
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -44,7 +46,9 @@ export default function ApplicationCreatePage() {
       hasError = true;
     }
 
-    if (hasError) {
+    const approverUserId = selectedApproverUserId;
+
+    if (hasError || approverUserId === undefined) {
       return;
     }
 
@@ -54,7 +58,7 @@ export default function ApplicationCreatePage() {
       await createApplication({
         title: title.trim(),
         content: content.trim(),
-        approverUserId: Number(selectedApproverUserId),
+        approverUserId,
       });
 
       navigate(`/applications`);

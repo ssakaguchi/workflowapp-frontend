@@ -5,8 +5,8 @@ import type { Approver } from "../../types/application";
 // 承認者選択のセレクトボックスコンポーネント
 type ApproverSelectBoxProps = {
   approvers: Approver[];
-  selectedApproverUserId: string;
-  setSelectedApproverUserId: (userId: string) => void;
+  selectedApproverUserId: number | undefined;
+  setSelectedApproverUserId: (userId: number | undefined) => void;
   approverError: string;
 };
 
@@ -21,8 +21,11 @@ const ApproverSelectBox = ({
     <TextField
       select
       label="承認者"
-      value={selectedApproverUserId}
-      onChange={(e) => setSelectedApproverUserId(e.target.value)}
+      value={selectedApproverUserId ?? ""}
+      onChange={(e) => {
+        const value = e.target.value;
+        setSelectedApproverUserId(value === "" ? undefined : Number(value));
+      }}
       fullWidth
       required
       error={Boolean(approverError)}
