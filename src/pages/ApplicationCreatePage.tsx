@@ -77,7 +77,7 @@ export default function ApplicationCreatePage() {
     };
 
     fetchApprovers();
-  }, [navigate]);
+  }, []);
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
