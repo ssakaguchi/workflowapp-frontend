@@ -420,11 +420,8 @@ describe("ApplicationDetailPage", () => {
     });
   });
 
-  test("roleが未保存の場合_getCurrentUserから取得したユーザーが担当承認者ならステータス更新ボタンを表示すること", async () => {
+  test("getCurrentUserから取得したユーザーが担当承認者ならステータス更新ボタンを表示すること", async () => {
     // arrange
-    vi.mocked(roleStorage.get).mockReturnValue(null); // roleが未保存の状態を再現
-    vi.mocked(roleStorage.set).mockImplementation(() => {}); // roleStorage.setのモック実装（呼び出しを記録するだけ）
-
     // getCurrentUserのモック実装を追加してApproverロールを返すようにする
     vi.mocked(getCurrentUser).mockResolvedValue({
       userId: 2,
