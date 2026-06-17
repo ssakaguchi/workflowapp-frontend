@@ -10,6 +10,7 @@ import {
 import ApplicationDetailPage from "../pages/ApplicationDetailPage";
 import { getCurrentUser } from "../services/authService";
 import type { ApplicationDetail } from "../types/application";
+import type { CurrentUser } from "../types/auth";
 import { roleStorage } from "../utils/roleStorage";
 import { tokenStorage } from "../utils/tokenStorage";
 
@@ -43,8 +44,22 @@ vi.mock("../utils/tokenStorage", () => ({
 }));
 
 describe("ApplicationDetailPage", () => {
+  const defaultCurrentUser: CurrentUser = {
+    userId: 2,
+    loginId: "approver01",
+    displayName: "テスト承認者",
+    role: "Approver",
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // getCurrentUserのモックをデフォルトのユーザー情報で解決するように設定
+    vi.mocked(getCurrentUser).mockResolvedValue(defaultCurrentUser);
+    vi.mocked(roleStorage.get).mockReturnValue("Approver");
+    vi.mocked(roleStorage.set).mockImplementation(() => {});
+    vi.mocked(roleStorage.remove).mockImplementation(() => {});
+    vi.mocked(tokenStorage.remove).mockImplementation(() => {});
   });
 
   function renderComponent(initialPath = "/applications/1") {
@@ -193,7 +208,14 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
-      approvalSteps: [],
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
     });
 
     const user = userEvent.setup();
@@ -218,7 +240,14 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
-      approvalSteps: [],
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
     });
 
     const user = userEvent.setup();
@@ -243,7 +272,14 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
-      approvalSteps: [],
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
     });
 
     mockedUpdateApplicationStatus.mockResolvedValue(undefined);
@@ -287,7 +323,14 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
-      approvalSteps: [],
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
     });
 
     mockedUpdateApplicationStatus.mockRejectedValue(new Error("API error"));
@@ -326,7 +369,14 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
-      approvalSteps: [],
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
     });
 
     // act
@@ -350,7 +400,14 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
-      approvalSteps: [],
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
     });
 
     // act
@@ -363,14 +420,11 @@ describe("ApplicationDetailPage", () => {
     });
   });
 
-  test("roleが未保存の場合_getCurrentUserからApproverロールを復元しステータス更新ボタンを表示すること", async () => {
+  test("getCurrentUserから取得したユーザーが担当承認者ならステータス更新ボタンを表示すること", async () => {
     // arrange
-    vi.mocked(roleStorage.get).mockReturnValue(null); // roleが未保存の状態を再現
-    vi.mocked(roleStorage.set).mockImplementation(() => {}); // roleStorage.setのモック実装（呼び出しを記録するだけ）
-
     // getCurrentUserのモック実装を追加してApproverロールを返すようにする
     vi.mocked(getCurrentUser).mockResolvedValue({
-      userId: 1,
+      userId: 2,
       loginId: "approver01",
       displayName: "テスト承認者",
       role: "Approver",
@@ -383,7 +437,14 @@ describe("ApplicationDetailPage", () => {
       applicantUserId: 1,
       status: "Pending",
       createdAt: "2026-01-01T00:00:00Z",
-      approvalSteps: [],
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
     });
 
     // act
@@ -492,6 +553,43 @@ describe("ApplicationDetailPage", () => {
     await waitFor(() => {
       expect(screen.getByText("承認ルート")).toBeInTheDocument();
       expect(screen.getByText("承認ルートは未設定です。")).toBeInTheDocument();
+    });
+  });
+
+  test("Approverでも現在の承認待ちステップの担当者でない場合はステータス更新ボタンを表示しないこと", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      userId: 3,
+      loginId: "approver02",
+      displayName: "別の承認者",
+      role: "Approver",
+    });
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
+    });
+
+    renderComponent();
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: "承認" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "却下" }),
+      ).not.toBeInTheDocument();
     });
   });
 });

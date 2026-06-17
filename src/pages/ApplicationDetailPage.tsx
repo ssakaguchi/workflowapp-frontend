@@ -10,7 +10,7 @@ import ApprovalActionButtons from "../components/applications/ApprovalActionButt
 import ApprovalRouteTable from "../components/applications/ApprovalRouteTable";
 import { getCurrentUser } from "../services/authService";
 import type { ApplicationDetail } from "../types/application";
-import type { UserRole } from "../types/auth";
+import type { CurrentUser } from "../types/auth";
 import { roleStorage } from "../utils/roleStorage";
 import { tokenStorage } from "../utils/tokenStorage";
 
@@ -31,9 +31,20 @@ export default function ApplicationDetailPage() {
   const [nextStatus, setNextStatus] = useState<"Approved" | "Rejected" | null>(
     null,
   );
-  const [role, setRole] = useState<UserRole | null>(() => roleStorage.get());
-  const isApprover = role === "Approver";
+
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const approvalSteps = application?.approvalSteps ?? [];
+
+  const currentPendingApprovalStep = approvalSteps
+    .filter((step) => step.status === "Pending")
+    .sort((a, b) => a.stepOrder - b.stepOrder)[0];
+
+  // 申請のステータスが「Pending」で、かつユーザーのロールが「Approver」、
+  // かつ現在の承認ステップの承認者IDがユーザーIDと一致する場合にステータス更新ボタンを表示
+  const canUpdateStatus =
+    application?.status === "Pending" &&
+    currentUser?.role === "Approver" &&
+    currentPendingApprovalStep?.approverUserId === currentUser.userId;
 
   // 画面表示時に申請の詳細を取得する
   useEffect(() => {
@@ -67,15 +78,11 @@ export default function ApplicationDetailPage() {
 
   // 画面表示時にユーザーロールを取得して状態にセットする
   useEffect(() => {
-    const fetchRoleIfNeeded = async () => {
-      if (role) {
-        return;
-      }
-
+    const fetchCurrentUser = async () => {
       try {
         const currentUser = await getCurrentUser();
+        setCurrentUser(currentUser);
         roleStorage.set(currentUser.role);
-        setRole(currentUser.role);
       } catch {
         tokenStorage.remove();
         roleStorage.remove();
@@ -83,8 +90,8 @@ export default function ApplicationDetailPage() {
       }
     };
 
-    fetchRoleIfNeeded();
-  }, [role, navigate]);
+    fetchCurrentUser();
+  }, [navigate]);
 
   // ステータス更新の確認ダイアログを開く関数
   const handleOpenStatusConfirm = (status: "Approved" | "Rejected") => {
@@ -162,7 +169,7 @@ export default function ApplicationDetailPage() {
         <>
           <ApplicationDetailInfo application={application} />
 
-          {application.status === "Pending" && isApprover && (
+          {canUpdateStatus && (
             <ApprovalActionButtons
               onOpenStatusConfirm={handleOpenStatusConfirm}
               isStatusUpdating={isStatusUpdating}
