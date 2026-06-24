@@ -533,11 +533,18 @@ describe("ApplicationListPage", () => {
     });
 
     mockedGetMyApprovalRequests.mockResolvedValue({
-      items: [],
-      totalCount: 0,
+      items: [
+        {
+          id: 1,
+          title: "承認待ちの申請",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 1,
       page: 1,
       pageSize: 10,
-      totalPages: 0,
+      totalPages: 1,
     });
 
     mockedRoleStorage.get.mockReturnValue("Approver");
@@ -557,9 +564,21 @@ describe("ApplicationListPage", () => {
     // Act
     await user.click(screen.getByRole("tab", { name: "承認待ち" }));
 
-    // Assert
+    // Assert - getMyApprovalRequests が呼ばれ、承認待ちの申請が表示されることを確認する
     await waitFor(() => {
       expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10);
+      expect(
+        screen.queryByRole("link", { name: "新規作成" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: "編集" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "削除" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("combobox", { name: "ステータス" }),
+      ).not.toBeInTheDocument();
     });
   });
 
