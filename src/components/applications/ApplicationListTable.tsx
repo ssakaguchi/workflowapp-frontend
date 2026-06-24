@@ -21,9 +21,16 @@ import { formatDateTime } from "../../utils/formatDateTime";
 type Props = {
   applications: ApplicationListItem[];
   onDelete?: (application: ApplicationListItem) => void;
+  showEdit?: boolean;
+  showDelete?: boolean;
 };
 
-export function ApplicationListTable({ applications, onDelete }: Props) {
+export function ApplicationListTable({
+  applications,
+  onDelete,
+  showEdit = true,
+  showDelete = true,
+}: Props) {
   return (
     <Table>
       <TableHead>
@@ -59,23 +66,27 @@ export function ApplicationListTable({ applications, onDelete }: Props) {
                   詳細
                 </Button>
 
-                <Button
-                  variant="outlined"
-                  size="small"
-                  component={RouterLink}
-                  to={`/applications/${application.id}/edit`}
-                >
-                  編集
-                </Button>
+                {showEdit && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    component={RouterLink}
+                    to={`/applications/${application.id}/edit`}
+                  >
+                    編集
+                  </Button>
+                )}
 
-                <Button
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  onClick={() => onDelete?.(application)}
-                >
-                  削除
-                </Button>
+                {showDelete && onDelete && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={() => onDelete?.(application)}
+                  >
+                    削除
+                  </Button>
+                )}
               </Stack>
             </TableCell>
           </TableRow>

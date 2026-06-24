@@ -28,13 +28,20 @@ describe("ApplicationListTable", () => {
   ) {
     render(
       <MemoryRouter>
-        <ApplicationListTable applications={applications} onDelete={onDelete} />
+        <ApplicationListTable
+          applications={applications}
+          onDelete={onDelete}
+          showEdit={true}
+          showDelete={true}
+        />
       </MemoryRouter>,
     );
   }
 
   test("各行に詳細リンク・編集リンク・削除ボタンが表示されること", () => {
-    renderComponent();
+    const onDelete = vi.fn();
+
+    renderComponent(onDelete);
 
     expect(screen.getAllByRole("link", { name: "詳細" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "編集" })).toHaveLength(2);
@@ -75,6 +82,8 @@ describe("ApplicationListTable", () => {
             },
           ]}
           onDelete={onDelete}
+          showEdit={true}
+          showDelete={true}
         />
       </MemoryRouter>,
     );
