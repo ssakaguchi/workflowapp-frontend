@@ -60,3 +60,6 @@ export type CreateApplicationRequest = ApplicationRequestBase;
 
 // 申請更新時はタイトルと内容のみ更新する
 export type UpdateApplicationRequest = ApplicationUpdateRequestBase;
+
+// 申請一覧の表示に使用する型
+export type ListView = "myApplications" | "approvalRequests";

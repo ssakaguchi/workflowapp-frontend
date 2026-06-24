@@ -3,18 +3,34 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { deleteApplication, getApplications } from "../api/applicationsApi";
+import {
+  deleteApplication,
+  getApplications,
+  getMyApprovalRequests,
+} from "../api/applicationsApi";
 import { ApplicationListPage } from "../pages/ApplicationListPage";
 import type { ApplicationListItem } from "../types/application";
+import { roleStorage } from "../utils/roleStorage";
 
 // applicationsApiをモックする
 vi.mock("../api/applicationsApi", () => ({
   getApplications: vi.fn(),
+  getMyApprovalRequests: vi.fn(),
   deleteApplication: vi.fn(),
 }));
 
+vi.mock("../utils/roleStorage", () => ({
+  roleStorage: {
+    get: vi.fn(),
+    set: vi.fn(),
+    remove: vi.fn(),
+  },
+}));
+
 const mockedGetApplications = vi.mocked(getApplications);
+const mockedGetMyApprovalRequests = vi.mocked(getMyApprovalRequests);
 const mockedDeleteApplication = vi.mocked(deleteApplication);
+const mockedRoleStorage = vi.mocked(roleStorage);
 
 describe("ApplicationListPage", () => {
   // 各テスト前にモックの状態をリセットして、テスト間の干渉を防止する
@@ -29,6 +45,8 @@ describe("ApplicationListPage", () => {
 
   test("初期表示時に読み込み中を表示すること", () => {
     mockedGetApplications.mockReturnValue(new Promise(() => {}));
+    mockedGetMyApprovalRequests.mockReturnValue(new Promise(() => {}));
+    mockedRoleStorage.get.mockReturnValue("Approver");
 
     render(
       <MemoryRouter>
@@ -447,5 +465,149 @@ describe("ApplicationListPage", () => {
     // 全件が表示されることを確認する
     expect(screen.getByText("申請中の申請")).toBeInTheDocument();
     expect(screen.getByText("承認済みの申請")).toBeInTheDocument();
+  });
+
+  // 3. 「承認待ち」タブを押すと getMyApprovalRequests が呼ばれること
+  test("Approverの場合、「承認待ち」タブが表示されること", async () => {
+    // Arrange: モックの戻り値を設定する
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    mockedRoleStorage.get.mockReturnValue("Approver");
+
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    // Act: 「承認待ち」タブが表示されているか確認する
+    const approvalRequestsTab = screen.getByRole("tab", {
+      name: "承認待ち",
+    });
+
+    // Assert: 「承認待ち」タブが表示されていることを確認する
+    expect(approvalRequestsTab).toBeInTheDocument();
+  });
+
+  test("Applicant の場合、「承認待ち」タブが表示されないこと", async () => {
+    // Arrange: モックの戻り値を設定する
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    // Act: 「承認待ち」タブが表示されていないか確認する
+    const approvalRequestsTab = screen.queryByRole("tab", {
+      name: "承認待ち",
+    });
+
+    // Assert: 「承認待ち」タブが表示されていないことを確認する
+    expect(approvalRequestsTab).not.toBeInTheDocument();
+  });
+
+  test("Approverの場合、「承認待ち」タブを押すと getMyApprovalRequests が呼ばれること", async () => {
+    // Arrange: モックの戻り値を設定する
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    mockedGetMyApprovalRequests.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    mockedRoleStorage.get.mockReturnValue("Approver");
+
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    // 初期表示では「自分の申請」なので getApplications が呼ばれる
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All");
+    });
+
+    // Act
+    await user.click(screen.getByRole("tab", { name: "承認待ち" }));
+
+    // Assert
+    await waitFor(() => {
+      expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10);
+    });
+  });
+
+  test("承認待ち一覧の取得に失敗した場合、エラーメッセージを表示し古い一覧を表示しないこと", async () => {
+    // 自分の申請一覧を一度表示
+    mockedGetApplications.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          title: "古い申請データ",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+
+    // 承認待ち一覧の取得に失敗するようにモックする
+    mockedGetMyApprovalRequests.mockRejectedValue(new Error("API error"));
+
+    mockedRoleStorage.get.mockReturnValue("Approver");
+
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    // 初期表示では「自分の申請」なので getApplications が呼ばれる
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All");
+    });
+
+    // 承認待ちタブでAPI失敗
+    await user.click(screen.getByRole("tab", { name: "承認待ち" }));
+
+    // エラーメッセージが表示されるのを待つ
+    await waitFor(() => {
+      expect(
+        screen.getByText("申請一覧の取得に失敗しました。"),
+      ).toBeInTheDocument();
+    });
+
+    // 古い申請データが表示されないことを確認する
+    expect(screen.queryByText("古い申請データ")).not.toBeInTheDocument();
   });
 });

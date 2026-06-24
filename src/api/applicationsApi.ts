@@ -28,6 +28,24 @@ export const getApplications = async (
   return response.data;
 };
 
+// 自分が承認者の承認待ち申請一覧を取得する関数
+export const getMyApprovalRequests = async (
+  page: number,
+  pageSize: number,
+): Promise<PagedResponse<ApplicationListItem>> => {
+  const response = await apiClient.get<PagedResponse<ApplicationListItem>>(
+    "/applications/my-approval-requests",
+    {
+      params: {
+        page,
+        pageSize,
+      },
+    },
+  );
+
+  return response.data;
+};
+
 // 申請詳細を取得する関数
 export async function getApplicationById(
   id: number,

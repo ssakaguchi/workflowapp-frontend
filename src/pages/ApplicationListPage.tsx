@@ -4,16 +4,27 @@ import {
   Pagination,
   type SelectChangeEvent,
   Stack,
+  Tab,
+  Tabs,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { type SyntheticEvent, useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
-import { deleteApplication, getApplications } from "../api/applicationsApi";
+import {
+  deleteApplication,
+  getApplications,
+  getMyApprovalRequests,
+} from "../api/applicationsApi";
 import ApplicationDeleteConfirmDialog from "../components/applications/ApplicationDeleteConfirmDialog";
 import { ApplicationListTable } from "../components/applications/ApplicationListTable";
 import ApplicationStatusFilter from "../components/applications/ApplicationStatusFilter";
-import type { ApplicationListItem, StatusFilter } from "../types/application";
+import type {
+  ApplicationListItem,
+  ListView,
+  StatusFilter,
+} from "../types/application";
+import { roleStorage } from "../utils/roleStorage";
 
 const PAGE_SIZE = 10;
 
@@ -21,29 +32,40 @@ export function ApplicationListPage() {
   const [page, setPage] = useState(1);
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [fetchErrorMessage, setFetchErrorMessage] = useState("");
+  const [operationErrorMessage, setOperationErrorMessage] = useState("");
   const [deleteTargetApplication, setDeleteTargetApplication] =
     useState<ApplicationListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("All");
   const [totalPages, setTotalPages] = useState(0);
+  const [listView, setListView] = useState<ListView>("myApplications");
+  const [role] = useState(() => roleStorage.get());
 
+  // 申請一覧の取得処理
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        setErrorMessage("");
-        const response = await getApplications(page, PAGE_SIZE, selectedStatus);
+        setIsLoading(true);
+        setFetchErrorMessage("");
+        setOperationErrorMessage("");
+        const response =
+          listView === "approvalRequests"
+            ? await getMyApprovalRequests(page, PAGE_SIZE)
+            : await getApplications(page, PAGE_SIZE, selectedStatus);
         setApplications(response.items);
         setTotalPages(response.totalPages);
       } catch {
-        setErrorMessage("申請一覧の取得に失敗しました。");
+        setApplications([]);
+        setTotalPages(0);
+        setFetchErrorMessage("申請一覧の取得に失敗しました。");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchApplications();
-  }, [page, selectedStatus]);
+  }, [page, selectedStatus, listView]);
 
   const handleDeleteClick = (application: ApplicationListItem) => {
     setDeleteTargetApplication(application);
@@ -57,12 +79,12 @@ export function ApplicationListPage() {
 
     // idが数値でない場合は処理を中断
     if (!Number.isFinite(deleteTargetApplication.id)) {
-      setErrorMessage("削除対象の申請IDが不正です。");
+      setOperationErrorMessage("削除対象の申請IDが不正です。");
       return;
     }
 
     // エラーメッセージをリセット
-    setErrorMessage("");
+    setOperationErrorMessage("");
     setIsDeleting(true);
 
     try {
@@ -72,7 +94,7 @@ export function ApplicationListPage() {
         current.filter((app) => app.id !== deleteTargetApplication.id),
       );
     } catch {
-      setErrorMessage("申請の削除に失敗しました。");
+      setOperationErrorMessage("申請の削除に失敗しました。");
     } finally {
       setIsDeleting(false);
       setDeleteTargetApplication(null);
@@ -89,47 +111,80 @@ export function ApplicationListPage() {
     setPage(1);
   };
 
+  const handleListViewChange = (_: SyntheticEvent, value: ListView) => {
+    setListView(value);
+    setPage(1);
+    setSelectedStatus("All");
+  };
+
   return (
     <div>
       <Box sx={{ p: 3 }}>
         <Typography variant="h5" component="h1">
           申請一覧
         </Typography>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 2 }}
-        >
-          {/* ステータスフィルタのセレクトボックス */}
-          <ApplicationStatusFilter
-            selectedStatus={selectedStatus}
-            handleStatusChange={handleStatusChange}
-          />
-
-          <Button
-            variant="contained"
-            component={RouterLink}
-            to="/applications/new"
+        {role === "Approver" && (
+          <Tabs
+            value={listView}
+            onChange={handleListViewChange}
+            sx={{ mt: 2, mb: 2 }}
           >
-            新規作成
-          </Button>
-        </Stack>
+            <Tab label="自分の申請" value="myApplications" />
+            <Tab label="承認待ち" value="approvalRequests" />
+          </Tabs>
+        )}
+        {listView === "myApplications" && (
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="flex-start"
+            sx={{ mt: 2, mb: 4 }}
+          >
+            {/* ステータスフィルタのセレクトボックス */}
+            <ApplicationStatusFilter
+              selectedStatus={selectedStatus}
+              handleStatusChange={handleStatusChange}
+            />
+
+            <Button
+              variant="contained"
+              component={RouterLink}
+              to="/applications/new"
+            >
+              新規作成
+            </Button>
+          </Stack>
+        )}
       </Box>
       {isLoading && <Typography>読み込み中...</Typography>}
-      {!isLoading && errorMessage && <Typography>{errorMessage}</Typography>}
-      {!isLoading && !errorMessage && applications.length === 0 && (
+      {!isLoading && fetchErrorMessage && (
+        <Typography color="error" sx={{ mt: 2 }}>
+          {fetchErrorMessage}
+        </Typography>
+      )}
+      {!isLoading && operationErrorMessage && (
+        <Typography color="error" sx={{ mt: 2 }}>
+          {operationErrorMessage}
+        </Typography>
+      )}
+      {!isLoading && !fetchErrorMessage && applications.length === 0 && (
         <Typography>
-          {selectedStatus === "All"
-            ? "申請データがありません。"
-            : "該当する申請データがありません。"}
+          {listView === "approvalRequests"
+            ? "承認待ちの申請はありません。"
+            : selectedStatus === "All"
+              ? "申請データがありません。"
+              : "該当する申請データがありません。"}
         </Typography>
       )}
       {/* フィルタリング後のデータがある場合のテーブル表示 */}
-      {!isLoading && applications.length > 0 && (
+      {!isLoading && !fetchErrorMessage && applications.length > 0 && (
         <ApplicationListTable
           applications={applications}
-          onDelete={handleDeleteClick}
+          onDelete={
+            listView === "myApplications" ? handleDeleteClick : undefined
+          }
+          showEdit={listView === "myApplications"}
+          showDelete={listView === "myApplications"}
         />
       )}
       {/* ページネーションの表示は、totalPagesが1より大きい場合に限定する */}
