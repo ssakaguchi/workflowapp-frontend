@@ -5,7 +5,7 @@ export const roleStorage = {
   get: (): UserRole | null => {
     const role = localStorage.getItem(ROLE_KEY);
 
-    if (role === "Applicant" || role === "Approver") {
+    if (role === "Applicant" || role === "Approver" || role === "Admin") {
       return role;
     }
 

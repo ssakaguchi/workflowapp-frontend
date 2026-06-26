@@ -9,7 +9,7 @@ export type RegisterRequest = {
   password: string;
 };
 
-export type UserRole = "Applicant" | "Approver";
+export type UserRole = "Applicant" | "Approver" | "Admin";
 
 export type LoginResponse = {
   token: string;

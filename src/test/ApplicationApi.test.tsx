@@ -5,6 +5,7 @@ import apiClient from "../api/apiClient";
 import {
   createApplication,
   deleteApplication,
+  getAdminApplications,
   updateApplication,
 } from "../api/applicationsApi";
 import type { UpdateApplicationRequest } from "../types/application";
@@ -56,5 +57,26 @@ describe("Application API", () => {
 
     // createApplication関数が正しいエンドポイントとリクエストボディでAPIを呼び出していることを検証
     expect(postSpy).toHaveBeenCalledWith("/applications", request);
+  });
+
+  test("getAdminApplicationsは管理者用申請一覧APIを呼び出すこと", async () => {
+    const getSpy = vi.spyOn(apiClient, "get").mockResolvedValue({
+      data: {
+        items: [],
+        totalCount: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 0,
+      },
+    } as AxiosResponse);
+
+    await getAdminApplications(1, 10);
+
+    expect(getSpy).toHaveBeenCalledWith("/applications/admin", {
+      params: {
+        page: 1,
+        pageSize: 10,
+      },
+    });
   });
 });

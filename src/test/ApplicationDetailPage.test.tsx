@@ -152,6 +152,16 @@ describe("ApplicationDetailPage", () => {
   });
 
   test("編集ボタンで編集画面へ遷移すること", async () => {
+    // arrange -
+    roleStorage.get = vi.fn().mockReturnValue("Applicant");
+
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      userId: 1,
+      loginId: "applicant01",
+      displayName: "申請者ユーザー",
+      role: "Applicant",
+    });
+
     mockedGetApplicationById.mockResolvedValue({
       id: 1,
       title: "出張申請",
@@ -589,6 +599,76 @@ describe("ApplicationDetailPage", () => {
       ).not.toBeInTheDocument();
       expect(
         screen.queryByRole("button", { name: "却下" }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  test("Adminでは承認・却下ボタンが表示されないこと", async () => {
+    // arrange - Adminユーザーとしてモックする
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      userId: 1,
+      loginId: "admin01",
+      displayName: "管理者",
+      role: "Admin",
+    });
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
+    });
+
+    // act
+    renderComponent();
+
+    // assert - Adminユーザーでは承認・却下ボタンが表示されないことを確認
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: "承認" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "却下" }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  test("Adminでは詳細画面の編集ボタンが表示されないこと", async () => {
+    // arrange - Adminユーザーとしてモックする
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      userId: 1,
+      loginId: "admin01",
+      displayName: "管理者",
+      role: "Admin",
+    });
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
+    });
+
+    // act
+    renderComponent();
+
+    // assert - Adminユーザーでは編集ボタンが表示されないことを確認
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: "編集" }),
       ).not.toBeInTheDocument();
     });
   });
