@@ -152,9 +152,7 @@ describe("ApplicationDetailPage", () => {
   });
 
   test("編集ボタンで編集画面へ遷移すること", async () => {
-    // arrange -
-    roleStorage.get = vi.fn().mockReturnValue("Applicant");
-
+    // Arrange
     vi.mocked(getCurrentUser).mockResolvedValue({
       userId: 1,
       loginId: "applicant01",
