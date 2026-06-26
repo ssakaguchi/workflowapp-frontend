@@ -62,4 +62,4 @@ export type CreateApplicationRequest = ApplicationRequestBase;
 export type UpdateApplicationRequest = ApplicationUpdateRequestBase;
 
 // 申請一覧の表示に使用する型
-export type ListView = "myApplications" | "approvalRequests";
+export type ListView = "myApplications" | "approvalRequests" | "admin";

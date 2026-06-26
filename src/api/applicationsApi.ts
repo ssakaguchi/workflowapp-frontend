@@ -46,6 +46,24 @@ export const getMyApprovalRequests = async (
   return response.data;
 };
 
+// 管理者用の申請一覧を取得する関数
+export const getAdminApplications = async (
+  page: number,
+  pageSize: number,
+): Promise<PagedResponse<ApplicationListItem>> => {
+  const response = await apiClient.get<PagedResponse<ApplicationListItem>>(
+    "/applications/admin",
+    {
+      params: {
+        page,
+        pageSize,
+      },
+    },
+  );
+
+  return response.data;
+};
+
 // 申請詳細を取得する関数
 export async function getApplicationById(
   id: number,

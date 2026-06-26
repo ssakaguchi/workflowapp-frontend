@@ -130,6 +130,12 @@ export default function ApplicationDetailPage() {
     }
   };
 
+  // 編集ボタンの表示条件を判定する
+  const canEdit =
+    application?.applicantUserId === currentUser?.userId &&
+    application?.status === "Pending" &&
+    currentUser?.role !== "Admin";
+
   return (
     <Container>
       <Typography variant="h5" component="h1" gutterBottom>
@@ -149,17 +155,19 @@ export default function ApplicationDetailPage() {
           一覧へ戻る
         </Button>
 
-        <Button
-          type="button"
-          variant="outlined"
-          onClick={() => {
-            if (id) {
-              navigate(`/applications/${id}/edit`);
-            }
-          }}
-        >
-          編集
-        </Button>
+        {canEdit && (
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => {
+              if (id) {
+                navigate(`/applications/${id}/edit`);
+              }
+            }}
+          >
+            編集
+          </Button>
+        )}
       </Stack>
 
       {isLoading && <p>読み込み中...</p>}

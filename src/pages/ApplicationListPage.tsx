@@ -13,6 +13,7 @@ import { Link as RouterLink } from "react-router-dom";
 
 import {
   deleteApplication,
+  getAdminApplications,
   getApplications,
   getMyApprovalRequests,
 } from "../api/applicationsApi";
@@ -28,6 +29,25 @@ import { roleStorage } from "../utils/roleStorage";
 
 const PAGE_SIZE = 10;
 
+const fetchApplicationList = async (
+  listView: ListView,
+  page: number,
+  selectedStatus: StatusFilter,
+) => {
+  switch (listView) {
+    case "admin":
+      return getAdminApplications(page, PAGE_SIZE);
+    case "approvalRequests":
+      return getMyApprovalRequests(page, PAGE_SIZE);
+    case "myApplications":
+      return getApplications(page, PAGE_SIZE, selectedStatus);
+    default: {
+      const _exhaustive: never = listView;
+      throw new Error(`Unsupported listView: ${_exhaustive}`);
+    }
+  }
+};
+
 export function ApplicationListPage() {
   const [page, setPage] = useState(1);
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
@@ -39,8 +59,10 @@ export function ApplicationListPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("All");
   const [totalPages, setTotalPages] = useState(0);
-  const [listView, setListView] = useState<ListView>("myApplications");
   const [role] = useState(() => roleStorage.get());
+  const [listView, setListView] = useState<ListView>(() =>
+    role === "Admin" ? "admin" : "myApplications",
+  );
 
   // 申請一覧の取得処理
   useEffect(() => {
@@ -49,10 +71,11 @@ export function ApplicationListPage() {
         setIsLoading(true);
         setFetchErrorMessage("");
         setOperationErrorMessage("");
-        const response =
-          listView === "approvalRequests"
-            ? await getMyApprovalRequests(page, PAGE_SIZE)
-            : await getApplications(page, PAGE_SIZE, selectedStatus);
+        const response = await fetchApplicationList(
+          listView,
+          page,
+          selectedStatus,
+        );
         setApplications(response.items);
         setTotalPages(response.totalPages);
       } catch {
@@ -123,6 +146,15 @@ export function ApplicationListPage() {
         <Typography variant="h5" component="h1">
           申請一覧
         </Typography>
+        {role === "Applicant" && (
+          <Tabs
+            value={listView}
+            onChange={handleListViewChange}
+            sx={{ mt: 2, mb: 2 }}
+          >
+            <Tab label="自分の申請" value="myApplications" />
+          </Tabs>
+        )}
         {role === "Approver" && (
           <Tabs
             value={listView}
@@ -131,6 +163,15 @@ export function ApplicationListPage() {
           >
             <Tab label="自分の申請" value="myApplications" />
             <Tab label="承認待ち" value="approvalRequests" />
+          </Tabs>
+        )}
+        {role === "Admin" && (
+          <Tabs
+            value={listView}
+            onChange={handleListViewChange}
+            sx={{ mt: 2, mb: 2 }}
+          >
+            <Tab label="管理者用" value="admin" />
           </Tabs>
         )}
         {listView === "myApplications" && (

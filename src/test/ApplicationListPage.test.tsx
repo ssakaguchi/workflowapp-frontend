@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   deleteApplication,
+  getAdminApplications,
   getApplications,
   getMyApprovalRequests,
 } from "../api/applicationsApi";
@@ -16,6 +17,7 @@ import { roleStorage } from "../utils/roleStorage";
 vi.mock("../api/applicationsApi", () => ({
   getApplications: vi.fn(),
   getMyApprovalRequests: vi.fn(),
+  getAdminApplications: vi.fn(),
   deleteApplication: vi.fn(),
 }));
 
@@ -29,6 +31,7 @@ vi.mock("../utils/roleStorage", () => ({
 
 const mockedGetApplications = vi.mocked(getApplications);
 const mockedGetMyApprovalRequests = vi.mocked(getMyApprovalRequests);
+const mockedGetAdminApplications = vi.mocked(getAdminApplications);
 const mockedDeleteApplication = vi.mocked(deleteApplication);
 const mockedRoleStorage = vi.mocked(roleStorage);
 
@@ -467,7 +470,6 @@ describe("ApplicationListPage", () => {
     expect(screen.getByText("承認済みの申請")).toBeInTheDocument();
   });
 
-  // 3. 「承認待ち」タブを押すと getMyApprovalRequests が呼ばれること
   test("Approverの場合、「承認待ち」タブが表示されること", async () => {
     // Arrange: モックの戻り値を設定する
     mockedGetApplications.mockResolvedValue({
@@ -628,5 +630,130 @@ describe("ApplicationListPage", () => {
 
     // 古い申請データが表示されないことを確認する
     expect(screen.queryByText("古い申請データ")).not.toBeInTheDocument();
+  });
+
+  test("Adminの場合、「管理者用」タブが表示されること", async () => {
+    // Arrange: モックの戻り値を設定する
+    mockedGetAdminApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    mockedRoleStorage.get.mockReturnValue("Admin");
+
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    // Act: 「管理者用」タブが表示されているか確認する
+    const adminTab = screen.getByRole("tab", {
+      name: "管理者用",
+    });
+
+    // Assert: 「管理者用」タブが表示されていることを確認する
+    expect(adminTab).toBeInTheDocument();
+  });
+
+  test("Adminログイン時に管理者用一覧が表示されること", async () => {
+    // Arrange - モックの戻り値を設定する
+    mockedGetAdminApplications.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          title: "管理者用の申請",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+
+    mockedRoleStorage.get.mockReturnValue("Admin");
+
+    // Act
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    // Assert - 管理者用の申請が表示されることを確認する
+    expect(await screen.findByText("管理者用の申請")).toBeInTheDocument();
+  });
+
+  test.each(["Applicant", "Approver"] as const)(
+    "%sでは管理者用タブや一覧が表示されないこと",
+    async (role) => {
+      // Arrange - モックの戻り値を設定する
+      mockedGetAdminApplications.mockResolvedValue({
+        items: [],
+        totalCount: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 0,
+      });
+
+      mockedRoleStorage.get.mockReturnValue(role);
+
+      // Act
+      render(
+        <MemoryRouter>
+          <ApplicationListPage />
+        </MemoryRouter>,
+      );
+
+      // Assert - 管理者用タブや一覧が表示されないことを確認する
+      expect(
+        screen.queryByRole("tab", { name: "管理者用" }),
+      ).not.toBeInTheDocument();
+
+      expect(screen.queryByText("管理者用の申請")).not.toBeInTheDocument();
+    },
+  );
+
+  test("Admin一覧では新規作成・編集・削除ボタンが表示されないこと", async () => {
+    // Arrange - モックの戻り値を設定する
+    mockedGetAdminApplications.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          title: "管理者用の申請",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+
+    mockedRoleStorage.get.mockReturnValue("Admin");
+
+    // Act
+    render(
+      <MemoryRouter>
+        <ApplicationListPage />
+      </MemoryRouter>,
+    );
+
+    // Assert - 新規作成・編集・削除ボタンが表示されないことを確認する
+    expect(
+      screen.queryByRole("link", { name: "新規作成" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "編集" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "削除" }),
+    ).not.toBeInTheDocument();
   });
 });
