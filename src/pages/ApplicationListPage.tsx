@@ -30,16 +30,21 @@ import { roleStorage } from "../utils/roleStorage";
 const PAGE_SIZE = 10;
 
 const fetchApplicationList = async (
-  listView: string,
+  listView: ListView,
   page: number,
   selectedStatus: StatusFilter,
 ) => {
-  if (listView === "admin") {
-    return await getAdminApplications(page, PAGE_SIZE);
-  } else if (listView === "approvalRequests") {
-    return await getMyApprovalRequests(page, PAGE_SIZE);
-  } else {
-    return await getApplications(page, PAGE_SIZE, selectedStatus);
+  switch (listView) {
+    case "admin":
+      return getAdminApplications(page, PAGE_SIZE);
+    case "approvalRequests":
+      return getMyApprovalRequests(page, PAGE_SIZE);
+    case "myApplications":
+      return getApplications(page, PAGE_SIZE, selectedStatus);
+    default: {
+      const _exhaustive: never = listView;
+      throw new Error(`Unsupported listView: ${_exhaustive}`);
+    }
   }
 };
 
