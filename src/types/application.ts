@@ -3,6 +3,7 @@ export type ApplicationListItem = {
   title: string;
   status: ApplicationStatus;
   createdAt: string;
+  applicantDisplayName: string;
 };
 
 export type ApplicationDetail = {

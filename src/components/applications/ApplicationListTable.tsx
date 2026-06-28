@@ -37,6 +37,7 @@ export function ApplicationListTable({
         <TableRow>
           <TableCell>ID</TableCell>
           <TableCell>タイトル</TableCell>
+          <TableCell>申請者</TableCell>
           <TableCell>ステータス</TableCell>
           <TableCell>作成日時</TableCell>
           <TableCell>操作</TableCell>
@@ -47,6 +48,7 @@ export function ApplicationListTable({
           <TableRow key={application.id}>
             <TableCell>{application.id}</TableCell>
             <TableCell>{application.title}</TableCell>
+            <TableCell>{application.applicantDisplayName}</TableCell>
             <TableCell>
               <Chip
                 label={getApplicationStatusLabel(application.status)}
