@@ -65,12 +65,14 @@ describe("ApplicationListPage", () => {
       {
         id: 1,
         title: "出張申請",
+        applicantDisplayName: "山田太郎",
         status: "Pending",
         createdAt: "2026-01-01T00:00:00Z",
       },
       {
         id: 2,
         title: "備品購入申請",
+        applicantDisplayName: "佐藤花子",
         status: "Approved",
         createdAt: "2026-01-01T00:00:00Z",
       },
@@ -94,6 +96,8 @@ describe("ApplicationListPage", () => {
 
     // データが表示されるのを待つ
     await waitFor(() => {
+      expect(screen.getByText("山田太郎")).toBeInTheDocument();
+      expect(screen.getByText("佐藤花子")).toBeInTheDocument();
       expect(screen.getByText("出張申請")).toBeInTheDocument();
       expect(screen.getByText("備品購入申請")).toBeInTheDocument();
       expect(screen.getByText("申請中")).toBeInTheDocument();
@@ -149,12 +153,14 @@ describe("ApplicationListPage", () => {
           id: 1,
           title: "削除対象の申請",
           status: "Pending",
+          applicantDisplayName: "山田太郎",
           createdAt: "2026-01-01T00:00:00Z",
         },
         {
           id: 2,
           title: "削除対象外の申請",
           status: "Approved",
+          applicantDisplayName: "佐藤花子",
           createdAt: "2026-01-01T00:00:00Z",
         },
       ],
@@ -211,6 +217,7 @@ describe("ApplicationListPage", () => {
           id: 1,
           title: "削除対象の申請",
           status: "Pending",
+          applicantDisplayName: "山田太郎",
           createdAt: "2026-01-01T00:00:00Z",
         },
       ],
@@ -259,6 +266,7 @@ describe("ApplicationListPage", () => {
         {
           id: 1,
           title: "削除対象の申請",
+          applicantDisplayName: "山田太郎",
           status: "Pending",
           createdAt: "2026-01-01T00:00:00Z",
         },
@@ -340,10 +348,12 @@ describe("ApplicationListPage", () => {
             title: "申請中の申請",
             status: "Pending",
             createdAt: "2026-01-01T00:00:00Z",
+            applicantDisplayName: "山田太郎",
           },
           {
             id: 2,
             title: "承認済みの申請",
+            applicantDisplayName: "佐藤花子",
             status: "Approved",
             createdAt: "2026-01-02T00:00:00Z",
           },
@@ -358,6 +368,7 @@ describe("ApplicationListPage", () => {
           {
             id: 1,
             title: "申請中の申請",
+            applicantDisplayName: "山田太郎",
             status: "Pending",
             createdAt: "2026-01-01T00:00:00Z",
           },
@@ -397,6 +408,7 @@ describe("ApplicationListPage", () => {
             id: 1,
             title: "申請中の申請",
             status: "Pending",
+            applicantDisplayName: "山田太郎",
             createdAt: "2026-01-01T00:00:00Z",
           },
         ],
@@ -438,12 +450,14 @@ describe("ApplicationListPage", () => {
         {
           id: 1,
           title: "申請中の申請",
+          applicantDisplayName: "山田太郎",
           status: "Pending",
           createdAt: "2026-01-01T00:00:00Z",
         },
         {
           id: 2,
           title: "承認済みの申請",
+          applicantDisplayName: "佐藤花子",
           status: "Approved",
           createdAt: "2026-01-02T00:00:00Z",
         },
@@ -540,6 +554,7 @@ describe("ApplicationListPage", () => {
           id: 1,
           title: "承認待ちの申請",
           status: "Pending",
+          applicantDisplayName: "山田太郎",
           createdAt: "2026-01-01T00:00:00Z",
         },
       ],
@@ -592,6 +607,7 @@ describe("ApplicationListPage", () => {
           id: 1,
           title: "古い申請データ",
           status: "Pending",
+          applicantDisplayName: "山田太郎",
           createdAt: "2026-01-01T00:00:00Z",
         },
       ],
@@ -666,6 +682,7 @@ describe("ApplicationListPage", () => {
         {
           id: 1,
           title: "管理者用の申請",
+          applicantDisplayName: "山田太郎",
           status: "Pending",
           createdAt: "2026-01-01T00:00:00Z",
         },
@@ -726,6 +743,7 @@ describe("ApplicationListPage", () => {
         {
           id: 1,
           title: "管理者用の申請",
+          applicantDisplayName: "山田太郎",
           status: "Pending",
           createdAt: "2026-01-01T00:00:00Z",
         },
