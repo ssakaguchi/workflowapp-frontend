@@ -8,16 +8,28 @@ export function useApprovers() {
   const [approverError, setApproverError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchApprovers = async () => {
+      setApproverError("");
+
       try {
         const result = await getApprovers();
+        if (cancelled) return;
+
         setApprovers(result);
       } catch {
+        if (cancelled) return;
+
         setApproverError("承認者一覧の取得に失敗しました。");
       }
     };
 
     fetchApprovers();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return {
