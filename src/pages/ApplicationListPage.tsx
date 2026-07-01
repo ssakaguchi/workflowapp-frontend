@@ -33,11 +33,12 @@ export function ApplicationListPage() {
     listView,
     page,
     setPage,
-    setOperationErrorMessage,
-    setApplications,
     role,
     changeStatus,
     changeListView,
+    clearOperationError,
+    showOperationError,
+    removeApplication,
   } = useApplications();
 
   const [deleteTargetApplication, setDeleteTargetApplication] =
@@ -56,22 +57,20 @@ export function ApplicationListPage() {
 
     // idが数値でない場合は処理を中断
     if (!Number.isFinite(deleteTargetApplication.id)) {
-      setOperationErrorMessage("削除対象の申請IDが不正です。");
+      showOperationError("削除対象の申請IDが不正です。");
       return;
     }
 
     // エラーメッセージをリセット
-    setOperationErrorMessage("");
+    clearOperationError();
     setIsDeleting(true);
 
     try {
       await deleteApplication(deleteTargetApplication.id);
 
-      setApplications((current) =>
-        current.filter((app) => app.id !== deleteTargetApplication.id),
-      );
+      removeApplication(deleteTargetApplication.id);
     } catch {
-      setOperationErrorMessage("申請の削除に失敗しました。");
+      showOperationError("申請の削除に失敗しました。");
     } finally {
       setIsDeleting(false);
       setDeleteTargetApplication(null);

@@ -86,6 +86,20 @@ export function useApplications() {
     setSelectedStatus("All");
   };
 
+  const clearOperationError = () => {
+    setOperationErrorMessage("");
+  };
+
+  const showOperationError = (message: string) => {
+    setOperationErrorMessage(message);
+  };
+
+  const removeApplication = (applicationId: number) => {
+    setApplications((current) =>
+      current.filter((app) => app.id !== applicationId),
+    );
+  };
+
   // 返却する値をオブジェクトとしてまとめる
   return {
     applications,
@@ -97,10 +111,11 @@ export function useApplications() {
     listView,
     page,
     setPage,
-    setOperationErrorMessage,
-    setApplications,
     role,
     changeStatus,
     changeListView,
+    clearOperationError,
+    showOperationError,
+    removeApplication,
   };
 }
