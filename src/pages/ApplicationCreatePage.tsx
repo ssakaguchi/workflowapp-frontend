@@ -7,9 +7,9 @@ import ApproverSelectBox from "../components/users/ApproverSelectBox";
 import { useApprovers } from "../hooks/useApprovers";
 
 export default function ApplicationCreatePage() {
-  const approvers = useApprovers();
   const navigate = useNavigate();
 
+  const { approvers, approverError, setApproverError } = useApprovers();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +20,6 @@ export default function ApplicationCreatePage() {
   const [selectedApproverUserId, setSelectedApproverUserId] = useState<
     number | undefined
   >(undefined);
-  const [approverError, setApproverError] = useState("");
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 import { getApplicationById } from "../api/applicationsApi";
 import type { ApplicationDetail } from "../types/application";
