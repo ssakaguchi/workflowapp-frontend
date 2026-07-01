@@ -8,87 +8,42 @@ import {
   Tabs,
   Typography,
 } from "@mui/material";
-import { type SyntheticEvent, useEffect, useState } from "react";
+import { type SyntheticEvent, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
-import {
-  deleteApplication,
-  getAdminApplications,
-  getApplications,
-  getMyApprovalRequests,
-} from "../api/applicationsApi";
+import { deleteApplication } from "../api/applicationsApi";
 import ApplicationDeleteConfirmDialog from "../components/applications/ApplicationDeleteConfirmDialog";
 import { ApplicationListTable } from "../components/applications/ApplicationListTable";
 import ApplicationStatusFilter from "../components/applications/ApplicationStatusFilter";
+import { useApplications } from "../hooks/useApplications";
 import type {
   ApplicationListItem,
   ListView,
   StatusFilter,
 } from "../types/application";
-import { roleStorage } from "../utils/roleStorage";
-
-const PAGE_SIZE = 10;
-
-const fetchApplicationList = async (
-  listView: ListView,
-  page: number,
-  selectedStatus: StatusFilter,
-) => {
-  switch (listView) {
-    case "admin":
-      return getAdminApplications(page, PAGE_SIZE);
-    case "approvalRequests":
-      return getMyApprovalRequests(page, PAGE_SIZE);
-    case "myApplications":
-      return getApplications(page, PAGE_SIZE, selectedStatus);
-    default: {
-      const _exhaustive: never = listView;
-      throw new Error(`Unsupported listView: ${_exhaustive}`);
-    }
-  }
-};
 
 export function ApplicationListPage() {
-  const [page, setPage] = useState(1);
-  const [applications, setApplications] = useState<ApplicationListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchErrorMessage, setFetchErrorMessage] = useState("");
-  const [operationErrorMessage, setOperationErrorMessage] = useState("");
+  const {
+    applications,
+    isLoading,
+    fetchErrorMessage,
+    operationErrorMessage,
+    selectedStatus,
+    totalPages,
+    listView,
+    page,
+    setPage,
+    role,
+    changeStatus,
+    changeListView,
+    clearOperationError,
+    showOperationError,
+    removeApplication,
+  } = useApplications();
+
   const [deleteTargetApplication, setDeleteTargetApplication] =
     useState<ApplicationListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("All");
-  const [totalPages, setTotalPages] = useState(0);
-  const [role] = useState(() => roleStorage.get());
-  const [listView, setListView] = useState<ListView>(() =>
-    role === "Admin" ? "admin" : "myApplications",
-  );
-
-  // 申請一覧の取得処理
-  useEffect(() => {
-    const fetchApplications = async () => {
-      try {
-        setIsLoading(true);
-        setFetchErrorMessage("");
-        setOperationErrorMessage("");
-        const response = await fetchApplicationList(
-          listView,
-          page,
-          selectedStatus,
-        );
-        setApplications(response.items);
-        setTotalPages(response.totalPages);
-      } catch {
-        setApplications([]);
-        setTotalPages(0);
-        setFetchErrorMessage("申請一覧の取得に失敗しました。");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchApplications();
-  }, [page, selectedStatus, listView]);
 
   const handleDeleteClick = (application: ApplicationListItem) => {
     setDeleteTargetApplication(application);
@@ -102,22 +57,20 @@ export function ApplicationListPage() {
 
     // idが数値でない場合は処理を中断
     if (!Number.isFinite(deleteTargetApplication.id)) {
-      setOperationErrorMessage("削除対象の申請IDが不正です。");
+      showOperationError("削除対象の申請IDが不正です。");
       return;
     }
 
     // エラーメッセージをリセット
-    setOperationErrorMessage("");
+    clearOperationError();
     setIsDeleting(true);
 
     try {
       await deleteApplication(deleteTargetApplication.id);
 
-      setApplications((current) =>
-        current.filter((app) => app.id !== deleteTargetApplication.id),
-      );
+      removeApplication(deleteTargetApplication.id);
     } catch {
-      setOperationErrorMessage("申請の削除に失敗しました。");
+      showOperationError("申請の削除に失敗しました。");
     } finally {
       setIsDeleting(false);
       setDeleteTargetApplication(null);
@@ -130,14 +83,11 @@ export function ApplicationListPage() {
   };
 
   const handleStatusChange = (event: SelectChangeEvent<string>) => {
-    setSelectedStatus(event.target.value as StatusFilter);
-    setPage(1);
+    changeStatus(event.target.value as StatusFilter);
   };
 
   const handleListViewChange = (_: SyntheticEvent, value: ListView) => {
-    setListView(value);
-    setPage(1);
-    setSelectedStatus("All");
+    changeListView(value);
   };
 
   return (

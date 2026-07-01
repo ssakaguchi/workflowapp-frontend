@@ -1,15 +1,15 @@
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { createApplication } from "../api/applicationsApi";
-import { getApprovers } from "../api/usersApi";
 import ApproverSelectBox from "../components/users/ApproverSelectBox";
-import type { Approver } from "../types/application";
+import { useApprovers } from "../hooks/useApprovers";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
 
+  const { approvers, approverError, setApproverError } = useApprovers();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,11 +17,9 @@ export default function ApplicationCreatePage() {
   const [contentError, setContentError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [approvers, setApprovers] = useState<Approver[]>([]);
   const [selectedApproverUserId, setSelectedApproverUserId] = useState<
     number | undefined
   >(undefined);
-  const [approverError, setApproverError] = useState("");
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -68,20 +66,6 @@ export default function ApplicationCreatePage() {
       setIsSubmitting(false);
     }
   };
-
-  // 承認者の一覧を取得してセレクトボックスに表示するための処理
-  useEffect(() => {
-    const fetchApprovers = async () => {
-      try {
-        const result = await getApprovers();
-        setApprovers(result);
-      } catch {
-        setApproverError("承認者一覧の取得に失敗しました。");
-      }
-    };
-
-    fetchApprovers();
-  }, []);
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>

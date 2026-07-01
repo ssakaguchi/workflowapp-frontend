@@ -2,14 +2,13 @@ import { Alert, Button, Container, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { getApplicationById } from "../api/applicationsApi";
 import { updateApplicationStatus } from "../api/applicationsApi";
 import ApplicationDetailInfo from "../components/applications/ApplicationDetailInfo";
 import ApplicationStatusConfirmDialog from "../components/applications/ApplicationStatusConfirmDialog";
 import ApprovalActionButtons from "../components/applications/ApprovalActionButtons";
 import ApprovalRouteTable from "../components/applications/ApprovalRouteTable";
+import useApplicationDetail from "../hooks/useApplicationDetail";
 import { getCurrentUser } from "../services/authService";
-import type { ApplicationDetail } from "../types/application";
 import type { CurrentUser } from "../types/auth";
 import { roleStorage } from "../utils/roleStorage";
 import { tokenStorage } from "../utils/tokenStorage";
@@ -17,12 +16,8 @@ import { tokenStorage } from "../utils/tokenStorage";
 export default function ApplicationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [application, setApplication] = useState<ApplicationDetail | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-
+  const { application, isLoading, errorMessage, setApplication } =
+    useApplicationDetail(id);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const [statusUpdateError, setStatusUpdateError] = useState("");
   const [statusUpdateMessage, setStatusUpdateMessage] = useState("");
@@ -45,36 +40,6 @@ export default function ApplicationDetailPage() {
     application?.status === "Pending" &&
     currentUser?.role === "Approver" &&
     currentPendingApprovalStep?.approverUserId === currentUser.userId;
-
-  // 画面表示時に申請の詳細を取得する
-  useEffect(() => {
-    const fetchApplication = async () => {
-      if (!id) {
-        setErrorMessage("申請IDが見つかりません。");
-        setIsLoading(false);
-        return;
-      }
-
-      const applicationId = Number(id);
-
-      if (isNaN(applicationId)) {
-        setErrorMessage("申請IDが不正です。");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await getApplicationById(applicationId);
-        setApplication(response);
-      } catch {
-        setErrorMessage("申請の詳細を取得できませんでした。");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchApplication();
-  }, [id]);
 
   // 画面表示時にユーザーロールを取得して状態にセットする
   useEffect(() => {
