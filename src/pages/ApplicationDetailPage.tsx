@@ -1,4 +1,5 @@
 import { Alert, Button, Container, Stack, Typography } from "@mui/material";
+import { queryClient } from "../lib/queryClient";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -51,6 +52,7 @@ export default function ApplicationDetailPage() {
       } catch {
         tokenStorage.remove();
         roleStorage.remove();
+        queryClient.clear();
         navigate("/login");
       }
     };
