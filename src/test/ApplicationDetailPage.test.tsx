@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -13,6 +13,7 @@ import type { ApplicationDetail } from "../types/application";
 import type { CurrentUser } from "../types/auth";
 import { roleStorage } from "../utils/roleStorage";
 import { tokenStorage } from "../utils/tokenStorage";
+import { renderWithQueryClient } from "./renderWithQueryClient";
 
 vi.mock("../api/applicationsApi", () => ({
   getApplicationById: vi.fn(),
@@ -43,7 +44,7 @@ vi.mock("../utils/tokenStorage", () => ({
   },
 }));
 
-describe("ApplicationDetailPage", () => {
+describe("ApplicationDetailPage", async () => {
   const defaultCurrentUser: CurrentUser = {
     userId: 2,
     loginId: "approver01",
@@ -63,7 +64,7 @@ describe("ApplicationDetailPage", () => {
   });
 
   function renderComponent(initialPath = "/applications/1") {
-    render(
+    return renderWithQueryClient(
       <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
           <Route path="/applications/:id" element={<ApplicationDetailPage />} />
@@ -136,7 +137,7 @@ describe("ApplicationDetailPage", () => {
 
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/applications/1"]}>
         <Routes>
           <Route path="/applications/:id" element={<ApplicationDetailPage />} />
@@ -148,7 +149,9 @@ describe("ApplicationDetailPage", () => {
     await screen.findByText("タイトル: 出張申請");
     await user.click(screen.getByText("一覧へ戻る"));
 
-    expect(screen.getByText("一覧画面")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("一覧画面")).toBeInTheDocument();
+    });
   });
 
   test("編集ボタンで編集画面へ遷移すること", async () => {
@@ -172,7 +175,7 @@ describe("ApplicationDetailPage", () => {
 
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/applications/1"]}>
         <Routes>
           <Route path="/applications/:id" element={<ApplicationDetailPage />} />
@@ -199,7 +202,13 @@ describe("ApplicationDetailPage", () => {
       approvalSteps: [],
     });
 
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.queryByText("承認")).not.toBeInTheDocument();
@@ -228,7 +237,13 @@ describe("ApplicationDetailPage", () => {
 
     const user = userEvent.setup();
 
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("承認")).toBeInTheDocument();
@@ -260,7 +275,13 @@ describe("ApplicationDetailPage", () => {
 
     const user = userEvent.setup();
 
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("却下")).toBeInTheDocument();
@@ -273,7 +294,8 @@ describe("ApplicationDetailPage", () => {
 
   test("ステータス更新の確認ダイアログで承認を選択するとステータスが更新されること", async () => {
     roleStorage.get = vi.fn().mockReturnValue("Approver");
-    mockedGetApplicationById.mockResolvedValue({
+
+    const pendingApplication: ApplicationDetail = {
       id: 1,
       title: "出張申請",
       content: "大阪出張",
@@ -288,7 +310,20 @@ describe("ApplicationDetailPage", () => {
           status: "Pending",
         },
       ],
-    });
+    };
+
+    const approvedApplication: ApplicationDetail = {
+      ...pendingApplication,
+      status: "Approved",
+      approvalSteps: pendingApplication.approvalSteps.map((step) => ({
+        ...step,
+        status: "Approved",
+      })),
+    };
+
+    mockedGetApplicationById
+      .mockResolvedValueOnce(pendingApplication)
+      .mockResolvedValueOnce(approvedApplication);
 
     mockedUpdateApplicationStatus.mockResolvedValue(undefined);
 
@@ -296,30 +331,25 @@ describe("ApplicationDetailPage", () => {
 
     renderComponent();
 
-    await waitFor(() => {
-      expect(screen.getByText("承認")).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByText("承認"));
+    await user.click(await screen.findByRole("button", { name: "承認" }));
 
     expect(
       screen.getByText("この申請を承認済みに変更します。よろしいですか？"),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByText("実行する"));
+    await user.click(screen.getByRole("button", { name: "実行する" }));
 
-    // updateApplicationStatusが正しい引数で呼ばれることを確認
     await waitFor(() => {
       expect(mockedUpdateApplicationStatus).toHaveBeenCalledWith(1, "Approved");
     });
 
-    // ステータス更新後のメッセージとステータス表示の確認
-    await waitFor(() => {
-      expect(
-        screen.getByText("ステータスを更新しました。"),
-      ).toBeInTheDocument();
-      expect(screen.getByText("ステータス: 承認済み")).toBeInTheDocument();
-    });
+    expect(
+      await screen.findByText("ステータスを更新しました。"),
+    ).toBeInTheDocument();
+
+    expect(await screen.findByText("ステータス: 承認済み")).toBeInTheDocument();
+
+    expect(mockedGetApplicationById).toHaveBeenCalledTimes(2);
   });
 
   test("ステータス更新失敗時にエラーメッセージが表示されること", async () => {
@@ -345,7 +375,13 @@ describe("ApplicationDetailPage", () => {
 
     const user = userEvent.setup();
 
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("承認")).toBeInTheDocument();
@@ -388,7 +424,13 @@ describe("ApplicationDetailPage", () => {
     });
 
     // act
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     // assert
     // ステータス更新ボタンが表示されることを確認
@@ -419,7 +461,13 @@ describe("ApplicationDetailPage", () => {
     });
 
     // act
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     // assert
     await waitFor(() => {
@@ -456,7 +504,13 @@ describe("ApplicationDetailPage", () => {
     });
 
     // act
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     // assert
     await waitFor(() => {
@@ -487,7 +541,7 @@ describe("ApplicationDetailPage", () => {
 
     // act
     // ログイン画面への遷移を確認するために、MemoryRouterとRoutesでApplicationDetailPageをラップしてレンダリングする
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/applications/1"]}>
         <Routes>
           <Route path="/applications/:id" element={<ApplicationDetailPage />} />
@@ -527,7 +581,13 @@ describe("ApplicationDetailPage", () => {
     });
 
     // act
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     // assert
     await waitFor(() => {
@@ -555,7 +615,13 @@ describe("ApplicationDetailPage", () => {
     });
 
     // act
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     // assert
     await waitFor(() => {
@@ -589,7 +655,13 @@ describe("ApplicationDetailPage", () => {
       ],
     });
 
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(
@@ -628,7 +700,13 @@ describe("ApplicationDetailPage", () => {
     });
 
     // act
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     // assert - Adminユーザーでは承認・却下ボタンが表示されないことを確認
     await waitFor(() => {
@@ -661,7 +739,13 @@ describe("ApplicationDetailPage", () => {
     });
 
     // act
-    renderComponent();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     // assert - Adminユーザーでは編集ボタンが表示されないことを確認
     await waitFor(() => {
