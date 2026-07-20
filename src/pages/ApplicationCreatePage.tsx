@@ -9,7 +9,12 @@ import { useApprovers } from "../hooks/useApprovers";
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
 
-  const { approvers, approverError, setApproverError } = useApprovers();
+  const { data: approvers = [], isError: isApproversError } = useApprovers();
+
+  const [approverValidationError, setApproverValidationError] = useState("");
+  const approverFetchError = isApproversError
+    ? "承認者一覧の取得に失敗しました。"
+    : approverValidationError;
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +45,7 @@ export default function ApplicationCreatePage() {
     }
 
     if (!selectedApproverUserId) {
-      setApproverError("承認者を選択してください。");
+      setApproverValidationError("承認者を選択してください。");
       hasError = true;
     }
 
@@ -134,9 +139,9 @@ export default function ApplicationCreatePage() {
             selectedApproverUserId={selectedApproverUserId}
             setSelectedApproverUserId={(userId) => {
               setSelectedApproverUserId(userId);
-              setApproverError("");
+              setApproverValidationError("");
             }}
-            approverError={approverError}
+            approverError={approverFetchError || approverValidationError}
           />
           <Button type="submit" variant="contained" disabled={isSubmitting}>
             {isSubmitting ? "申請中..." : "申請"}
