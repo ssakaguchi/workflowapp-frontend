@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createApplication } from "../api/applicationsApi";
 import { getApprovers } from "../api/usersApi";
 import ApplicationCreatePage from "../pages/ApplicationCreatePage";
+import { renderWithQueryClient } from "./renderWithQueryClient";
 
 // applicationsApiをモックする
 vi.mock("../api/applicationsApi", () => ({
@@ -40,7 +41,7 @@ describe("ApplicationCreatePage", () => {
 
   // テストで使用する共通のレンダリング関数
   function renderComponent(initialPath = "/applications/new") {
-    return render(
+    return renderWithQueryClient(
       <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
           <Route path="/applications/new" element={<ApplicationCreatePage />} />
@@ -227,11 +228,7 @@ describe("ApplicationCreatePage", () => {
     // createApplicationのモックが完了しないPromiseを返すように設定する
     mockedCreateApplication.mockImplementation(() => new Promise(() => {}));
 
-    render(
-      <MemoryRouter>
-        <ApplicationCreatePage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     await user.type(screen.getByLabelText("タイトル"), "新規申請タイトル");
     await user.type(screen.getByLabelText("内容"), "新規申請内容");
@@ -263,5 +260,15 @@ describe("ApplicationCreatePage", () => {
     ).toBeInTheDocument();
 
     expect(mockedCreateApplication).not.toHaveBeenCalled();
+  });
+
+  test("承認者一覧の取得に失敗した場合、エラーメッセージを表示すること", async () => {
+    mockedGetApprovers.mockRejectedValue(new Error("API error"));
+
+    renderComponent();
+
+    expect(
+      await screen.findByText("承認者一覧の取得に失敗しました。"),
+    ).toBeInTheDocument();
   });
 });

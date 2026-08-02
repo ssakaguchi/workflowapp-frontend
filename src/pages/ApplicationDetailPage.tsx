@@ -1,4 +1,5 @@
 import { Alert, Button, Container, Stack, Typography } from "@mui/material";
+import { queryClient } from "../lib/queryClient";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -16,7 +17,7 @@ import { tokenStorage } from "../utils/tokenStorage";
 export default function ApplicationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { application, isLoading, errorMessage, setApplication } =
+  const { application, isLoading, errorMessage, refetchApplication } =
     useApplicationDetail(id);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const [statusUpdateError, setStatusUpdateError] = useState("");
@@ -51,6 +52,7 @@ export default function ApplicationDetailPage() {
       } catch {
         tokenStorage.remove();
         roleStorage.remove();
+        queryClient.clear();
         navigate("/login");
       }
     };
@@ -80,10 +82,12 @@ export default function ApplicationDetailPage() {
     try {
       await updateApplicationStatus(application.id, nextStatus);
 
-      // ステータス更新後は最新のステータスで画面を更新
-      setApplication((current) =>
-        current ? { ...current, status: nextStatus } : current,
-      );
+      // ステータス更新後に申請の詳細を再取得する
+      const refetchResult = await refetchApplication();
+
+      if (refetchResult.isError) {
+        throw refetchResult.error;
+      }
 
       setStatusUpdateMessage("ステータスを更新しました。");
       setStatusConfirmOpen(false);

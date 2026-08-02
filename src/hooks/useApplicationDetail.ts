@@ -1,64 +1,45 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { getApplicationById } from "../api/applicationsApi";
-import type { ApplicationDetail } from "../types/application";
+import { applicationQueryKeys } from "../queries/applicationQueryKeys";
+
+// 申請IDを解析する関数
+function parseApplicationId(id: string | undefined): number | null {
+  if (!id) {
+    return null;
+  }
+
+  const applicationId = Number(id);
+
+  if (!Number.isInteger(applicationId) || applicationId <= 0) {
+    return null;
+  }
+
+  return applicationId;
+}
 
 export default function useApplicationDetail(id: string | undefined) {
-  const [application, setApplication] = useState<ApplicationDetail | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const applicationId = parseApplicationId(id);
+  const query = useQuery({
+    queryKey: applicationQueryKeys.detail(applicationId ?? 0),
+    queryFn: () => getApplicationById(applicationId!),
+    enabled: applicationId !== null,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
+  let errorMessage = "";
 
-    const fetchApplication = async () => {
-      setIsLoading(true);
-      setErrorMessage("");
-      setApplication(null);
-
-      if (!id) {
-        setErrorMessage("申請IDが見つかりません。");
-        setIsLoading(false);
-        return;
-      }
-
-      const applicationId = Number(id);
-
-      if (isNaN(applicationId)) {
-        setErrorMessage("申請IDが不正です。");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await getApplicationById(applicationId);
-        if (cancelled) return;
-
-        setApplication(response);
-      } catch {
-        if (cancelled) return;
-
-        setErrorMessage("申請の詳細を取得できませんでした。");
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchApplication();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+  if (!id) {
+    errorMessage = "申請IDが見つかりません。";
+  } else if (applicationId === null) {
+    errorMessage = "申請IDが不正です。";
+  } else if (query.isError) {
+    errorMessage = "申請の詳細を取得できませんでした。";
+  }
 
   return {
-    application,
-    isLoading,
+    application: query.data,
+    isLoading: query.isLoading,
     errorMessage,
-    setApplication,
+    refetchApplication: query.refetch,
   };
 }

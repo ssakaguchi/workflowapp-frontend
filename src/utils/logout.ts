@@ -1,3 +1,4 @@
+import { queryClient } from "../lib/queryClient";
 import { removeToken } from "./auth";
 import { roleStorage } from "./roleStorage";
 
@@ -5,4 +6,5 @@ import { roleStorage } from "./roleStorage";
 export const logout = () => {
   removeToken();
   roleStorage.remove();
+  queryClient.clear();
 };
