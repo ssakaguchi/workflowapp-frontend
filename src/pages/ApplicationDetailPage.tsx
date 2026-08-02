@@ -1,5 +1,4 @@
 import { Alert, Button, Container, Stack, Typography } from "@mui/material";
-import { queryClient } from "../lib/queryClient";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -9,6 +8,7 @@ import ApplicationStatusConfirmDialog from "../components/applications/Applicati
 import ApprovalActionButtons from "../components/applications/ApprovalActionButtons";
 import ApprovalRouteTable from "../components/applications/ApprovalRouteTable";
 import useApplicationDetail from "../hooks/useApplicationDetail";
+import { queryClient } from "../lib/queryClient";
 import { getCurrentUser } from "../services/authService";
 import type { CurrentUser } from "../types/auth";
 import { roleStorage } from "../utils/roleStorage";
