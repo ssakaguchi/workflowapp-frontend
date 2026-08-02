@@ -14,7 +14,7 @@ export default function ApplicationCreatePage() {
   const [approverValidationError, setApproverValidationError] = useState("");
   const approverFetchError = isApproversError
     ? "承認者一覧の取得に失敗しました。"
-    : approverValidationError;
+    : "";
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
