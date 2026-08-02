@@ -44,7 +44,7 @@ vi.mock("../utils/tokenStorage", () => ({
   },
 }));
 
-describe("ApplicationDetailPage", async () => {
+describe("ApplicationDetailPage", () => {
   const defaultCurrentUser: CurrentUser = {
     userId: 2,
     loginId: "approver01",
