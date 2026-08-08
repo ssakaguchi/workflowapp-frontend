@@ -531,7 +531,7 @@ describe("ApplicationListPage", () => {
 
   test("Adminの場合、「管理者用」タブが表示されること", async () => {
     // Arrange: モックの戻り値を設定する
-    mockedGetApplications.mockResolvedValue({
+    mockedGetAdminApplications.mockResolvedValue({
       items: [],
       totalCount: 0,
       page: 1,
