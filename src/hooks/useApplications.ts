@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import {
   getAdminApplications,
   getApplications,
   getMyApprovalRequests,
 } from "../api/applicationsApi";
+import { applicationQueryKeys } from "../queries/applicationQueryKeys";
 import type {
   ApplicationListItem,
   ListView,
+  PagedResponse,
   StatusFilter,
 } from "../types/application";
 import { roleStorage } from "../utils/roleStorage";
@@ -35,11 +38,7 @@ const fetchApplicationList = async (
 
 // 申請一覧の取得処理をカスタムフックとして切り出す
 export function useApplications() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchErrorMessage, setFetchErrorMessage] = useState("");
   const [operationErrorMessage, setOperationErrorMessage] = useState("");
-  const [applications, setApplications] = useState<ApplicationListItem[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
   const [role] = useState(() => roleStorage.get());
   const [page, setPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("All");
@@ -48,30 +47,18 @@ export function useApplications() {
   );
 
   // 申請一覧の取得処理
-  useEffect(() => {
-    const fetchApplications = async () => {
-      try {
-        setIsLoading(true);
-        setFetchErrorMessage("");
-        setOperationErrorMessage("");
-        const response = await fetchApplicationList(
-          listView,
-          page,
-          selectedStatus,
-        );
-        setApplications(response.items);
-        setTotalPages(response.totalPages);
-      } catch {
-        setApplications([]);
-        setTotalPages(0);
-        setFetchErrorMessage("申請一覧の取得に失敗しました。");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const queryClient = useQueryClient();
+  const queryKey = applicationQueryKeys.list(listView, page, selectedStatus);
+  const applicationQuery = useQuery({
+    queryKey,
+    queryFn: () => fetchApplicationList(listView, page, selectedStatus),
+  });
 
-    fetchApplications();
-  }, [page, selectedStatus, listView]);
+  const applications = applicationQuery.data?.items ?? [];
+  const totalPages = applicationQuery.data?.totalPages ?? 0;
+  const fetchErrorMessage = applicationQuery.isError
+    ? "申請一覧の取得に失敗しました。"
+    : "";
 
   // ステータスフィルターの変更時の処理
   const changeStatus = (event: StatusFilter) => {
@@ -94,16 +81,29 @@ export function useApplications() {
     setOperationErrorMessage(message);
   };
 
+  // 申請を削除した後に、キャッシュから削除する処理
   const removeApplication = (applicationId: number) => {
-    setApplications((current) =>
-      current.filter((app) => app.id !== applicationId),
+    queryClient.setQueriesData<PagedResponse<ApplicationListItem>>(
+      { queryKey },
+      (current) => {
+        if (!current) {
+          return current;
+        }
+
+        return {
+          ...current,
+          items: current.items.filter(
+            (application) => application.id !== applicationId,
+          ),
+        };
+      },
     );
   };
 
   // 返却する値をオブジェクトとしてまとめる
   return {
     applications,
-    isLoading,
+    isLoading: applicationQuery.isLoading,
     fetchErrorMessage,
     operationErrorMessage,
     selectedStatus,
