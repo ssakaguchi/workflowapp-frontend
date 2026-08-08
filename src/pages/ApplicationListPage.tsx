@@ -11,7 +11,6 @@ import {
 import { type SyntheticEvent, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
-import { deleteApplication } from "../api/applicationsApi";
 import ApplicationDeleteConfirmDialog from "../components/applications/ApplicationDeleteConfirmDialog";
 import { ApplicationListTable } from "../components/applications/ApplicationListTable";
 import ApplicationStatusFilter from "../components/applications/ApplicationStatusFilter";
@@ -38,12 +37,12 @@ export function ApplicationListPage() {
     changeListView,
     clearOperationError,
     showOperationError,
-    removeApplication,
+    deleteApplication,
+    isDeleting,
   } = useApplications();
 
   const [deleteTargetApplication, setDeleteTargetApplication] =
     useState<ApplicationListItem | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteClick = (application: ApplicationListItem) => {
     setDeleteTargetApplication(application);
@@ -63,22 +62,17 @@ export function ApplicationListPage() {
 
     // エラーメッセージをリセット
     clearOperationError();
-    setIsDeleting(true);
 
     try {
       await deleteApplication(deleteTargetApplication.id);
-
-      removeApplication(deleteTargetApplication.id);
     } catch {
       showOperationError("申請の削除に失敗しました。");
     } finally {
-      setIsDeleting(false);
       setDeleteTargetApplication(null);
     }
   };
 
   const handleDeleteCancel = () => {
-    setIsDeleting(false);
     setDeleteTargetApplication(null);
   };
 

@@ -90,9 +90,9 @@ export async function updateApplication(
 }
 
 // 申請を削除する関数
-export async function deleteApplication(id: number): Promise<void> {
+export const deleteApplication = async (id: number): Promise<void> => {
   await apiClient.delete(`/applications/${id}`);
-}
+};
 
 // 申請のステータスを更新する関数
 export async function updateApplicationStatus(

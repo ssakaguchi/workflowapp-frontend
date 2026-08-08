@@ -131,67 +131,6 @@ describe("ApplicationListPage", () => {
     });
   });
 
-  test("削除確認ダイアログでOKを選択すると、申請を削除して一覧から消すこと", async () => {
-    const user = userEvent.setup();
-
-    // 2件の申請を返すようにモックする
-    mockedGetApplications.mockResolvedValue({
-      items: [
-        {
-          id: 1,
-          title: "削除対象の申請",
-          status: "Pending",
-          applicantDisplayName: "山田太郎",
-          createdAt: "2026-01-01T00:00:00Z",
-        },
-        {
-          id: 2,
-          title: "削除対象外の申請",
-          status: "Approved",
-          applicantDisplayName: "佐藤花子",
-          createdAt: "2026-01-01T00:00:00Z",
-        },
-      ],
-      totalCount: 2,
-      page: 1,
-      pageSize: 10,
-      totalPages: 1,
-    });
-
-    // deleteApplicationが成功するようにモックする
-    mockedDeleteApplication.mockResolvedValueOnce();
-
-    renderComponent();
-
-    expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
-    expect(screen.getByText("削除対象外の申請")).toBeInTheDocument();
-
-    // 最初の削除ボタンをクリックする
-    const deleteButtons = screen.getAllByRole("button", { name: "削除" });
-    await user.click(deleteButtons[0]);
-
-    expect(
-      screen.getByRole("dialog", { name: "申請を削除しますか？" }),
-    ).toBeInTheDocument();
-
-    // ダイアログに申請タイトルが表示されていることを確認する
-    expect(
-      screen.getByText("「削除対象の申請」を削除してもよろしいですか？"),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "削除する" }));
-
-    // deleteApplicationが正しいID(1)で呼び出されたことを確認する
-    expect(mockedDeleteApplication).toHaveBeenCalledWith(1);
-
-    // 削除後、削除対象の申請が表示されなくなり、削除対象外の申請は表示されたままであることを確認する
-    await waitFor(() => {
-      expect(screen.queryByText("削除対象の申請")).not.toBeInTheDocument();
-    });
-
-    expect(screen.getByText("削除対象外の申請")).toBeInTheDocument();
-  });
-
   test("削除確認ダイアログでキャンセルを選択すると、申請が削除されないこと", async () => {
     const user = userEvent.setup();
 
@@ -758,5 +697,125 @@ describe("ApplicationListPage", () => {
 
     // 1ページ目のデータが残っていないことを確認
     expect(screen.queryByText("1ページ目の申請")).not.toBeInTheDocument();
+  });
+
+  test("削除確認ダイアログで削除するを選択すると、申請を削除して一覧から消すこと", async () => {
+    mockedGetApplications
+      // 初回取得
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 1,
+            title: "削除対象の申請",
+            status: "Pending",
+            applicantDisplayName: "山田太郎",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+          {
+            id: 2,
+            title: "削除対象外の申請",
+            status: "Pending",
+            applicantDisplayName: "佐藤花子",
+            createdAt: "2026-01-02T00:00:00Z",
+          },
+        ],
+        totalCount: 2,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      })
+      // 削除成功後の再取得
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 2,
+            title: "削除対象外の申請",
+            status: "Pending",
+            applicantDisplayName: "佐藤花子",
+            createdAt: "2026-01-02T00:00:00Z",
+          },
+        ],
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      });
+
+    mockedDeleteApplication.mockResolvedValue(undefined);
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+
+    const user = userEvent.setup();
+    renderComponent();
+
+    // 初回取得の完了を待つ
+    expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
+    expect(screen.getByText("削除対象外の申請")).toBeInTheDocument();
+
+    // 既存コードに合わせて削除対象の削除ボタンを押す
+    const deleteButtons = screen.getAllByRole("button", { name: "削除" });
+    await user.click(deleteButtons[0]);
+
+    await user.click(screen.getByRole("button", { name: "削除する" }));
+
+    expect(mockedDeleteApplication).toHaveBeenCalledWith(1);
+
+    // 再取得後、削除対象が消えるまで待つ
+    await waitFor(() => {
+      expect(screen.queryByText("削除対象の申請")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText("削除対象外の申請")).toBeInTheDocument();
+
+    // キャッシュ無効化によって一覧が再取得されたことを確認
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledTimes(2);
+    });
+
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "All");
+  });
+
+  test("申請の削除に失敗した場合、エラーメッセージを表示して一覧に申請を残すこと", async () => {
+    mockedGetApplications.mockResolvedValueOnce({
+      items: [
+        {
+          id: 1,
+          title: "削除対象の申請",
+          status: "Pending",
+          applicantDisplayName: "山田太郎",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+
+    mockedDeleteApplication.mockRejectedValueOnce(new Error("削除APIエラー"));
+
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+
+    const user = userEvent.setup();
+    renderComponent();
+
+    // 初回取得の完了を待つ
+    expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "削除" }));
+
+    await user.click(screen.getByRole("button", { name: "削除する" }));
+
+    // Mutationの完了を待つ
+    expect(
+      await screen.findByText("申請の削除に失敗しました。"),
+    ).toBeInTheDocument();
+
+    expect(mockedDeleteApplication).toHaveBeenCalledWith(1);
+
+    // 削除に失敗したため、申請は一覧に残る
+    expect(screen.getByText("削除対象の申請")).toBeInTheDocument();
+
+    // onSuccessは実行されないため、一覧は再取得されない
+    expect(mockedGetApplications).toHaveBeenCalledTimes(1);
   });
 });

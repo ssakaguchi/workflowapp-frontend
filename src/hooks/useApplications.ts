@@ -1,18 +1,14 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { deleteApplication as deleteApplicationApi } from "../api/applicationsApi";
 import {
   getAdminApplications,
   getApplications,
   getMyApprovalRequests,
 } from "../api/applicationsApi";
 import { applicationQueryKeys } from "../queries/applicationQueryKeys";
-import type {
-  ApplicationListItem,
-  ListView,
-  PagedResponse,
-  StatusFilter,
-} from "../types/application";
+import type { ListView, StatusFilter } from "../types/application";
 import { roleStorage } from "../utils/roleStorage";
 
 const PAGE_SIZE = 10;
@@ -48,6 +44,14 @@ export function useApplications() {
 
   // 申請一覧の取得処理
   const queryClient = useQueryClient();
+  const deleteMutation = useMutation({
+    mutationFn: (applicationId: number) => deleteApplicationApi(applicationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: applicationQueryKeys.lists(),
+      });
+    },
+  });
   const queryKey = applicationQueryKeys.list(listView, page, selectedStatus);
   const applicationQuery = useQuery({
     queryKey,
@@ -81,25 +85,6 @@ export function useApplications() {
     setOperationErrorMessage(message);
   };
 
-  // 申請を削除した後に、キャッシュから削除する処理
-  const removeApplication = (applicationId: number) => {
-    queryClient.setQueriesData<PagedResponse<ApplicationListItem>>(
-      { queryKey },
-      (current) => {
-        if (!current) {
-          return current;
-        }
-
-        return {
-          ...current,
-          items: current.items.filter(
-            (application) => application.id !== applicationId,
-          ),
-        };
-      },
-    );
-  };
-
   // 返却する値をオブジェクトとしてまとめる
   return {
     applications,
@@ -116,6 +101,7 @@ export function useApplications() {
     changeListView,
     clearOperationError,
     showOperationError,
-    removeApplication,
+    deleteApplication: deleteMutation.mutateAsync,
+    isDeleting: deleteMutation.isPending,
   };
 }
