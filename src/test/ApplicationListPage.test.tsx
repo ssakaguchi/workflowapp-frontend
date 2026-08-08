@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   deleteApplication,
@@ -12,6 +12,7 @@ import {
 import { ApplicationListPage } from "../pages/ApplicationListPage";
 import type { ApplicationListItem } from "../types/application";
 import { roleStorage } from "../utils/roleStorage";
+import { renderWithQueryClient } from "./renderWithQueryClient";
 
 // applicationsApiをモックする
 vi.mock("../api/applicationsApi", () => ({
@@ -35,15 +36,18 @@ const mockedGetAdminApplications = vi.mocked(getAdminApplications);
 const mockedDeleteApplication = vi.mocked(deleteApplication);
 const mockedRoleStorage = vi.mocked(roleStorage);
 
+function renderComponent() {
+  return renderWithQueryClient(
+    <MemoryRouter>
+      <ApplicationListPage />
+    </MemoryRouter>,
+  );
+}
+
 describe("ApplicationListPage", () => {
   // 各テスト前にモックの状態をリセットして、テスト間の干渉を防止する
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  // 各テスト後にモックを完全にリセットして、次のテストに影響を与えないようにする
-  afterEach(() => {
-    vi.restoreAllMocks();
+    vi.resetAllMocks();
   });
 
   test("初期表示時に読み込み中を表示すること", () => {
@@ -51,11 +55,7 @@ describe("ApplicationListPage", () => {
     mockedGetMyApprovalRequests.mockReturnValue(new Promise(() => {}));
     mockedRoleStorage.get.mockReturnValue("Approver");
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     expect(screen.getByText("読み込み中...")).toBeInTheDocument();
   });
@@ -86,11 +86,7 @@ describe("ApplicationListPage", () => {
       totalPages: 1,
     });
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     expect(screen.getByText("読み込み中...")).toBeInTheDocument();
 
@@ -116,11 +112,7 @@ describe("ApplicationListPage", () => {
       totalPages: 0,
     });
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     expect(
       await screen.findByText("申請データがありません。"),
@@ -130,82 +122,13 @@ describe("ApplicationListPage", () => {
   test("API取得失敗時にエラーメッセージを表示すること", async () => {
     mockedGetApplications.mockRejectedValue(new Error("API error"));
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     await waitFor(() => {
       expect(
         screen.getByText("申請一覧の取得に失敗しました。"),
       ).toBeInTheDocument();
     });
-  });
-
-  test("削除確認ダイアログでOKを選択すると、申請を削除して一覧から消すこと", async () => {
-    const user = userEvent.setup();
-
-    // 2件の申請を返すようにモックする
-    mockedGetApplications.mockResolvedValue({
-      items: [
-        {
-          id: 1,
-          title: "削除対象の申請",
-          status: "Pending",
-          applicantDisplayName: "山田太郎",
-          createdAt: "2026-01-01T00:00:00Z",
-        },
-        {
-          id: 2,
-          title: "削除対象外の申請",
-          status: "Approved",
-          applicantDisplayName: "佐藤花子",
-          createdAt: "2026-01-01T00:00:00Z",
-        },
-      ],
-      totalCount: 2,
-      page: 1,
-      pageSize: 10,
-      totalPages: 1,
-    });
-
-    // deleteApplicationが成功するようにモックする
-    mockedDeleteApplication.mockResolvedValueOnce();
-
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
-
-    expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
-    expect(screen.getByText("削除対象外の申請")).toBeInTheDocument();
-
-    // 最初の削除ボタンをクリックする
-    const deleteButtons = screen.getAllByRole("button", { name: "削除" });
-    await user.click(deleteButtons[0]);
-
-    expect(
-      screen.getByRole("dialog", { name: "申請を削除しますか？" }),
-    ).toBeInTheDocument();
-
-    // ダイアログに申請タイトルが表示されていることを確認する
-    expect(
-      screen.getByText("「削除対象の申請」を削除してもよろしいですか？"),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "削除する" }));
-
-    // deleteApplicationが正しいID(1)で呼び出されたことを確認する
-    expect(mockedDeleteApplication).toHaveBeenCalledWith(1);
-
-    // 削除後、削除対象の申請が表示されなくなり、削除対象外の申請は表示されたままであることを確認する
-    await waitFor(() => {
-      expect(screen.queryByText("削除対象の申請")).not.toBeInTheDocument();
-    });
-
-    expect(screen.getByText("削除対象外の申請")).toBeInTheDocument();
   });
 
   test("削除確認ダイアログでキャンセルを選択すると、申請が削除されないこと", async () => {
@@ -227,11 +150,7 @@ describe("ApplicationListPage", () => {
       totalPages: 1,
     });
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
 
@@ -279,11 +198,7 @@ describe("ApplicationListPage", () => {
 
     mockedDeleteApplication.mockRejectedValue(new Error("API error"));
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
 
@@ -323,11 +238,7 @@ describe("ApplicationListPage", () => {
       totalPages: 0,
     });
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     const createLink = screen.getByRole("link", { name: "新規作成" });
 
@@ -381,21 +292,15 @@ describe("ApplicationListPage", () => {
 
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     await user.click(screen.getByRole("combobox", { name: "ステータス" }));
     await user.click(screen.getByRole("option", { name: "申請中" }));
 
     // 「申請中」の申請のみが表示されることを確認する
-    expect(screen.getByText("申請中の申請")).toBeInTheDocument();
+    expect(await screen.findByText("申請中の申請")).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.queryByText("承認済みの申請")).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText("承認済みの申請")).not.toBeInTheDocument();
 
     expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "Pending");
   });
@@ -427,18 +332,14 @@ describe("ApplicationListPage", () => {
 
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     await user.click(screen.getByRole("combobox", { name: "ステータス" }));
     await user.click(screen.getByRole("option", { name: "承認済み" }));
 
     // 該当する申請データがありませんメッセージが表示されることを確認する
     expect(
-      screen.getByText("該当する申請データがありません。"),
+      await screen.findByText("該当する申請データがありません。"),
     ).toBeInTheDocument();
 
     expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "Approved");
@@ -470,11 +371,7 @@ describe("ApplicationListPage", () => {
 
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     await user.click(screen.getByRole("combobox", { name: "ステータス" }));
     await user.click(screen.getByRole("option", { name: "すべて" }));
@@ -496,11 +393,7 @@ describe("ApplicationListPage", () => {
 
     mockedRoleStorage.get.mockReturnValue("Approver");
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     // Act: 「承認待ち」タブが表示されているか確認する
     const approvalRequestsTab = screen.getByRole("tab", {
@@ -523,11 +416,7 @@ describe("ApplicationListPage", () => {
 
     mockedRoleStorage.get.mockReturnValue("Applicant");
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     // Act: 「承認待ち」タブが表示されていないか確認する
     const approvalRequestsTab = screen.queryByRole("tab", {
@@ -567,11 +456,8 @@ describe("ApplicationListPage", () => {
     mockedRoleStorage.get.mockReturnValue("Approver");
 
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+
+    renderComponent();
 
     // 初期表示では「自分の申請」なので getApplications が呼ばれる
     await waitFor(() => {
@@ -582,21 +468,21 @@ describe("ApplicationListPage", () => {
     await user.click(screen.getByRole("tab", { name: "承認待ち" }));
 
     // Assert - getMyApprovalRequests が呼ばれ、承認待ちの申請が表示されることを確認する
-    await waitFor(() => {
-      expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10);
-      expect(
-        screen.queryByRole("link", { name: "新規作成" }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("link", { name: "編集" }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: "削除" }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("combobox", { name: "ステータス" }),
-      ).not.toBeInTheDocument();
-    });
+    expect(await screen.findByText("承認待ちの申請")).toBeInTheDocument();
+
+    expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10);
+    expect(
+      screen.queryByRole("link", { name: "新規作成" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "編集" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "削除" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("combobox", { name: "ステータス" }),
+    ).not.toBeInTheDocument();
   });
 
   test("承認待ち一覧の取得に失敗した場合、エラーメッセージを表示し古い一覧を表示しないこと", async () => {
@@ -623,26 +509,21 @@ describe("ApplicationListPage", () => {
     mockedRoleStorage.get.mockReturnValue("Approver");
 
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
 
-    // 初期表示では「自分の申請」なので getApplications が呼ばれる
-    await waitFor(() => {
-      expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All");
-    });
+    renderComponent();
+
+    // 最初の一覧が取得・表示されたことを確認する
+    expect(await screen.findByText("古い申請データ")).toBeInTheDocument();
 
     // 承認待ちタブでAPI失敗
     await user.click(screen.getByRole("tab", { name: "承認待ち" }));
 
     // エラーメッセージが表示されるのを待つ
-    await waitFor(() => {
-      expect(
-        screen.getByText("申請一覧の取得に失敗しました。"),
-      ).toBeInTheDocument();
-    });
+    expect(
+      await screen.findByText("申請一覧の取得に失敗しました。"),
+    ).toBeInTheDocument();
+
+    expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10);
 
     // 古い申請データが表示されないことを確認する
     expect(screen.queryByText("古い申請データ")).not.toBeInTheDocument();
@@ -660,11 +541,7 @@ describe("ApplicationListPage", () => {
 
     mockedRoleStorage.get.mockReturnValue("Admin");
 
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     // Act: 「管理者用」タブが表示されているか確認する
     const adminTab = screen.getByRole("tab", {
@@ -696,11 +573,7 @@ describe("ApplicationListPage", () => {
     mockedRoleStorage.get.mockReturnValue("Admin");
 
     // Act
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     // Assert - 管理者用の申請が表示されることを確認する
     expect(await screen.findByText("管理者用の申請")).toBeInTheDocument();
@@ -721,11 +594,7 @@ describe("ApplicationListPage", () => {
       mockedRoleStorage.get.mockReturnValue(role);
 
       // Act
-      render(
-        <MemoryRouter>
-          <ApplicationListPage />
-        </MemoryRouter>,
-      );
+      renderComponent();
 
       // Assert - 管理者用タブや一覧が表示されないことを確認する
       expect(
@@ -757,11 +626,7 @@ describe("ApplicationListPage", () => {
     mockedRoleStorage.get.mockReturnValue("Admin");
 
     // Act
-    render(
-      <MemoryRouter>
-        <ApplicationListPage />
-      </MemoryRouter>,
-    );
+    renderComponent();
 
     // Assert - 新規作成・編集・削除ボタンが表示されないことを確認する
     expect(
@@ -773,5 +638,184 @@ describe("ApplicationListPage", () => {
     expect(
       screen.queryByRole("button", { name: "削除" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("ページを切り替えると、指定したページの申請一覧を取得すること", async () => {
+    mockedGetApplications
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 1,
+            title: "1ページ目の申請",
+            status: "Pending",
+            applicantDisplayName: "山田太郎",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+        totalCount: 11,
+        page: 1,
+        pageSize: 10,
+        totalPages: 2,
+      })
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 11,
+            title: "2ページ目の申請",
+            status: "Pending",
+            applicantDisplayName: "佐藤花子",
+            createdAt: "2026-01-02T00:00:00Z",
+          },
+        ],
+        totalCount: 11,
+        page: 2,
+        pageSize: 10,
+        totalPages: 2,
+      });
+
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+
+    const user = userEvent.setup();
+    renderComponent();
+
+    // 1ページ目の取得と表示を確認
+    expect(await screen.findByText("1ページ目の申請")).toBeInTheDocument();
+
+    expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All");
+
+    // MUI Paginationの「2ページ目」ボタンを押す
+    await user.click(
+      screen.getByRole("button", {
+        name: /go to page 2/i,
+      }),
+    );
+
+    // 2ページ目の取得と表示を確認
+    expect(await screen.findByText("2ページ目の申請")).toBeInTheDocument();
+
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(2, 10, "All");
+
+    // 1ページ目のデータが残っていないことを確認
+    expect(screen.queryByText("1ページ目の申請")).not.toBeInTheDocument();
+  });
+
+  test("削除確認ダイアログで削除するを選択すると、申請を削除して一覧から消すこと", async () => {
+    mockedGetApplications
+      // 初回取得
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 1,
+            title: "削除対象の申請",
+            status: "Pending",
+            applicantDisplayName: "山田太郎",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+          {
+            id: 2,
+            title: "削除対象外の申請",
+            status: "Pending",
+            applicantDisplayName: "佐藤花子",
+            createdAt: "2026-01-02T00:00:00Z",
+          },
+        ],
+        totalCount: 2,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      })
+      // 削除成功後の再取得
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 2,
+            title: "削除対象外の申請",
+            status: "Pending",
+            applicantDisplayName: "佐藤花子",
+            createdAt: "2026-01-02T00:00:00Z",
+          },
+        ],
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+      });
+
+    mockedDeleteApplication.mockResolvedValue(undefined);
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+
+    const user = userEvent.setup();
+    renderComponent();
+
+    // 初回取得の完了を待つ
+    expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
+    expect(screen.getByText("削除対象外の申請")).toBeInTheDocument();
+
+    // 既存コードに合わせて削除対象の削除ボタンを押す
+    const deleteButtons = screen.getAllByRole("button", { name: "削除" });
+    await user.click(deleteButtons[0]);
+
+    await user.click(screen.getByRole("button", { name: "削除する" }));
+
+    expect(mockedDeleteApplication).toHaveBeenCalledWith(1);
+
+    // 再取得後、削除対象が消えるまで待つ
+    await waitFor(() => {
+      expect(screen.queryByText("削除対象の申請")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText("削除対象外の申請")).toBeInTheDocument();
+
+    // キャッシュ無効化によって一覧が再取得されたことを確認
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledTimes(2);
+    });
+
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "All");
+  });
+
+  test("申請の削除に失敗した場合、エラーメッセージを表示して一覧に申請を残すこと", async () => {
+    mockedGetApplications.mockResolvedValueOnce({
+      items: [
+        {
+          id: 1,
+          title: "削除対象の申請",
+          status: "Pending",
+          applicantDisplayName: "山田太郎",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+
+    mockedDeleteApplication.mockRejectedValueOnce(new Error("削除APIエラー"));
+
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+
+    const user = userEvent.setup();
+    renderComponent();
+
+    // 初回取得の完了を待つ
+    expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "削除" }));
+
+    await user.click(screen.getByRole("button", { name: "削除する" }));
+
+    // Mutationの完了を待つ
+    expect(
+      await screen.findByText("申請の削除に失敗しました。"),
+    ).toBeInTheDocument();
+
+    expect(mockedDeleteApplication).toHaveBeenCalledWith(1);
+
+    // 削除に失敗したため、申請は一覧に残る
+    expect(screen.getByText("削除対象の申請")).toBeInTheDocument();
+
+    // onSuccessは実行されないため、一覧は再取得されない
+    expect(mockedGetApplications).toHaveBeenCalledTimes(1);
   });
 });
