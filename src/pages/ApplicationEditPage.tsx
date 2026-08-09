@@ -59,7 +59,7 @@ export default function ApplicationEditPage() {
 
     try {
       await updateApplicationMutation.mutateAsync({
-        applicationId: application.id,
+        applicationId,
         request: {
           title: title.trim(),
           content: content.trim(),
