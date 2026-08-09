@@ -38,7 +38,7 @@ export default function ApplicationEditPage() {
     const applicationId = Number(id);
 
     if (!application) {
-      setSaveErrorMessage("申請IDが不正です。");
+      setSaveErrorMessage("申請の詳細を取得できていません。再読み込みしてください。");
       return;
     }
 
