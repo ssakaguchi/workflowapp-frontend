@@ -1,49 +1,27 @@
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
-import { getApplicationById, updateApplication } from "../api/applicationsApi";
+import useApplicationDetail from "../hooks/useApplicationDetail";
+import useUpdateApplication from "../hooks/useUpdateApplication";
 
 export default function ApplicationEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
   const [saveErrorMessage, setSaveErrorMessage] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const updateApplicationMutation = useUpdateApplication();
+  const isSaving = updateApplicationMutation.isPending;
+  const { application, isLoading, errorMessage } = useApplicationDetail(id);
 
   useEffect(() => {
-    const fetchApplication = async () => {
-      if (!id) {
-        setErrorMessage("申請IDが指定されていません。");
-        setIsLoading(false);
-        return;
-      }
+    if (!application) {
+      return;
+    }
 
-      const applicationId = Number(id);
-
-      if (Number.isNaN(applicationId)) {
-        setErrorMessage("申請IDが不正です。");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const application = await getApplicationById(applicationId);
-        setTitle(application.title);
-        setContent(application.content);
-      } catch {
-        setErrorMessage("申請の詳細を取得できませんでした。");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchApplication();
-  }, [id]);
+    setTitle(application.title);
+    setContent(application.content);
+  }, [application]);
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,6 +33,11 @@ export default function ApplicationEditPage() {
     }
 
     const applicationId = Number(id);
+
+    if (!application) {
+      setSaveErrorMessage("申請IDが不正です。");
+      return;
+    }
 
     if (Number.isNaN(applicationId)) {
       setSaveErrorMessage("申請IDが不正です。");
@@ -72,18 +55,17 @@ export default function ApplicationEditPage() {
     }
 
     try {
-      setIsSaving(true);
-
-      await updateApplication(applicationId, {
-        title: title.trim(),
-        content: content.trim(),
+      await updateApplicationMutation.mutateAsync({
+        applicationId: application.id,
+        request: {
+          title: title.trim(),
+          content: content.trim(),
+        },
       });
 
       navigate(`/applications/${applicationId}`);
     } catch {
       setSaveErrorMessage("申請の更新に失敗しました。");
-    } finally {
-      setIsSaving(false);
     }
   };
 
