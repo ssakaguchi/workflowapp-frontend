@@ -1,5 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -7,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { getApplicationById, updateApplication } from "../api/applicationsApi";
 import ApplicationEditPage from "../pages/ApplicationEditPage";
 import type { ApplicationDetail } from "../types/application";
+import { renderWithQueryClient } from "./renderWithQueryClient";
 
 // applicationsApiをモックする
 vi.mock("../api/applicationsApi", () => ({
@@ -31,33 +31,20 @@ describe("ApplicationEditPage", () => {
 
   // テストで使用する共通のレンダリング関数
   function renderComponent(initialPath = "/applications/1/edit") {
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-        mutations: {
-          retry: false,
-        },
-      },
-    });
-
-    return render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={[initialPath]}>
-          <Routes>
-            <Route
-              path="/applications/:id/edit"
-              element={<ApplicationEditPage />}
-            />
-            {/* 申請詳細画面への遷移を確認するためのダミールート */}
-            <Route
-              path="/applications/:id"
-              element={<div>申請詳細画面</div>}
-            />{" "}
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>,
+    return renderWithQueryClient(
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Routes>
+          <Route
+            path="/applications/:id/edit"
+            element={<ApplicationEditPage />}
+          />
+          {/* 申請詳細画面への遷移を確認するためのダミールート */}
+          <Route
+            path="/applications/:id"
+            element={<div>申請詳細画面</div>}
+          />{" "}
+        </Routes>
+      </MemoryRouter>,
     );
   }
 
