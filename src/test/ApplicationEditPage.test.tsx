@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -6,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { getApplicationById, updateApplication } from "../api/applicationsApi";
 import ApplicationEditPage from "../pages/ApplicationEditPage";
 import type { ApplicationDetail } from "../types/application";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // applicationsApiをモックする
 vi.mock("../api/applicationsApi", () => ({
@@ -50,7 +50,7 @@ describe("ApplicationEditPage", () => {
               path="/applications/:id/edit"
               element={<ApplicationEditPage />}
             />
-            // 申請詳細画面への遷移を確認するためのダミールート
+            {/* 申請詳細画面への遷移を確認するためのダミールート */}
             <Route
               path="/applications/:id"
               element={<div>申請詳細画面</div>}
@@ -240,5 +240,53 @@ describe("ApplicationEditPage", () => {
     expect(await screen.findByText("申請IDが不正です。")).toBeInTheDocument();
     expect(mockedGetApplicationById).not.toHaveBeenCalled();
     expect(mockedUpdateApplication).not.toHaveBeenCalled();
+  });
+
+  test("申請の保存中は保存ボタンが無効になること", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    const application: ApplicationDetail = {
+      id: 1,
+      title: "更新前のタイトル",
+      content: "更新前の内容",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
+    };
+
+    mockedGetApplicationById.mockResolvedValue(application);
+
+    let resolveUpdate!: () => void;
+
+    // updateApplicationのモック実装を、Promiseが解決されるまで待機するように変更
+    mockedUpdateApplication.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveUpdate = resolve;
+        }),
+    );
+
+    renderComponent();
+
+    const submitButton = await screen.findByRole("button", {
+      name: "保存",
+    });
+
+    // act
+    await user.click(submitButton);
+
+    // assert
+    const savingButton = await screen.findByRole("button", {
+      name: "保存中...",
+    });
+
+    expect(savingButton).toBeDisabled();
+
+    // Promiseを完了させて、テスト終了後も処理を残さない
+    resolveUpdate();
+
+    expect(await screen.findByText("申請詳細画面")).toBeInTheDocument();
   });
 });

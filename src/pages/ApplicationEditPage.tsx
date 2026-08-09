@@ -1,6 +1,7 @@
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import useApplicationDetail from "../hooks/useApplicationDetail";
 import useUpdateApplication from "../hooks/useUpdateApplication";
 
@@ -13,14 +14,16 @@ export default function ApplicationEditPage() {
   const updateApplicationMutation = useUpdateApplication();
   const isSaving = updateApplicationMutation.isPending;
   const { application, isLoading, errorMessage } = useApplicationDetail(id);
+  const initializedApplicationId = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!application) {
+    if (!application || initializedApplicationId.current === application.id) {
       return;
     }
 
     setTitle(application.title);
     setContent(application.content);
+    initializedApplicationId.current = application.id;
   }, [application]);
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {

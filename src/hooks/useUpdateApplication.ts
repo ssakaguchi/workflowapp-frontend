@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { UpdateApplicationRequest } from "../types/application";
+
 import { updateApplication } from "../api/applicationsApi";
 import { applicationQueryKeys } from "../queries/applicationQueryKeys";
+import type { UpdateApplicationRequest } from "../types/application";
 
 type UpdateApplicationVariables = {
   applicationId: number;
@@ -15,7 +16,7 @@ export default function useUpdateApplication() {
     mutationFn: ({ applicationId, request }: UpdateApplicationVariables) =>
       updateApplication(applicationId, request),
 
-    onSuccess: async (__unsafe_useEmotionCache, variables) => {
+    onSuccess: async (_data, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: applicationQueryKeys.detail(variables.applicationId),
