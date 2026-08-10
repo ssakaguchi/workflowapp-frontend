@@ -17,9 +17,12 @@ export default function useUpdateApplicationStatus() {
 
     onSuccess: async (_, variables) => {
       await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: applicationQueryKeys.detail(variables.applicationId),
-        }),
+        queryClient.invalidateQueries(
+          {
+            queryKey: applicationQueryKeys.detail(variables.applicationId),
+          },
+          { throwOnError: true },
+        ),
         queryClient.invalidateQueries({
           queryKey: applicationQueryKeys.lists(),
         }),
