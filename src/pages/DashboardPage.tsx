@@ -7,29 +7,11 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
 
-import { getCurrentUser } from "../services/authService";
-import type { CurrentUser } from "../types/auth";
+import useCurrentUser from "../hooks/useCurrentUser";
 
 const DashboardPage: React.FC = () => {
-  const [user, setUser] = useState<CurrentUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-      } catch {
-        setErrorMessage("ユーザーが認証されていません。ログインしてください。");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
+  const { data: user, isLoading, isError } = useCurrentUser();
 
   return (
     <Container maxWidth="md">
@@ -39,9 +21,9 @@ const DashboardPage: React.FC = () => {
             <CircularProgress />
           </Box>
         )}
-        {!isLoading && errorMessage && (
+        {!isLoading && isError && (
           <Alert severity="error" sx={{ mt: 4 }}>
-            {errorMessage}
+            ユーザーが認証されていません。ログインしてください。
           </Alert>
         )}
 

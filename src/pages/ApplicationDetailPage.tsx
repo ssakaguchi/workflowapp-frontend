@@ -1,4 +1,5 @@
 import { Alert, Button, Container, Stack, Typography } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -7,16 +8,15 @@ import ApplicationStatusConfirmDialog from "../components/applications/Applicati
 import ApprovalActionButtons from "../components/applications/ApprovalActionButtons";
 import ApprovalRouteTable from "../components/applications/ApprovalRouteTable";
 import useApplicationDetail from "../hooks/useApplicationDetail";
+import useCurrentUser from "../hooks/useCurrentUser";
 import useUpdateApplicationStatus from "../hooks/useUpdateApplicationStatus";
-import { queryClient } from "../lib/queryClient";
-import { getCurrentUser } from "../services/authService";
-import type { CurrentUser } from "../types/auth";
 import { roleStorage } from "../utils/roleStorage";
 import { tokenStorage } from "../utils/tokenStorage";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { application, isLoading, errorMessage } = useApplicationDetail(id);
   const [statusUpdateError, setStatusUpdateError] = useState("");
   const [statusUpdateMessage, setStatusUpdateMessage] = useState("");
@@ -25,8 +25,7 @@ export default function ApplicationDetailPage() {
   const [nextStatus, setNextStatus] = useState<"Approved" | "Rejected" | null>(
     null,
   );
-
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const { data: currentUser, isError: isCurrentUserError } = useCurrentUser();
   const approvalSteps = application?.approvalSteps ?? [];
 
   const currentPendingApprovalStep = approvalSteps
@@ -42,23 +41,22 @@ export default function ApplicationDetailPage() {
 
   const updateApplicationStatusMutation = useUpdateApplicationStatus();
 
-  // 画面表示時にユーザーロールを取得して状態にセットする
   useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        setCurrentUser(currentUser);
-        roleStorage.set(currentUser.role);
-      } catch {
-        tokenStorage.remove();
-        roleStorage.remove();
-        queryClient.clear();
-        navigate("/login");
-      }
-    };
+    if (currentUser) {
+      roleStorage.set(currentUser.role);
+    }
+  }, [currentUser]);
 
-    fetchCurrentUser();
-  }, [navigate]);
+  useEffect(() => {
+    if (!isCurrentUserError) {
+      return;
+    }
+
+    tokenStorage.remove();
+    roleStorage.remove();
+    queryClient.clear();
+    navigate("/login");
+  }, [isCurrentUserError, navigate, queryClient]);
 
   // ステータス更新の確認ダイアログを開く関数
   const handleOpenStatusConfirm = (status: "Approved" | "Rejected") => {
