@@ -2,12 +2,12 @@ import { Alert, Button, Container, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { updateApplicationStatus } from "../api/applicationsApi";
 import ApplicationDetailInfo from "../components/applications/ApplicationDetailInfo";
 import ApplicationStatusConfirmDialog from "../components/applications/ApplicationStatusConfirmDialog";
 import ApprovalActionButtons from "../components/applications/ApprovalActionButtons";
 import ApprovalRouteTable from "../components/applications/ApprovalRouteTable";
 import useApplicationDetail from "../hooks/useApplicationDetail";
+import useUpdateApplicationStatus from "../hooks/useUpdateApplicationStatus";
 import { queryClient } from "../lib/queryClient";
 import { getCurrentUser } from "../services/authService";
 import type { CurrentUser } from "../types/auth";
@@ -17,9 +17,7 @@ import { tokenStorage } from "../utils/tokenStorage";
 export default function ApplicationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { application, isLoading, errorMessage, refetchApplication } =
-    useApplicationDetail(id);
-  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  const { application, isLoading, errorMessage } = useApplicationDetail(id);
   const [statusUpdateError, setStatusUpdateError] = useState("");
   const [statusUpdateMessage, setStatusUpdateMessage] = useState("");
 
@@ -41,6 +39,8 @@ export default function ApplicationDetailPage() {
     application?.status === "Pending" &&
     currentUser?.role === "Approver" &&
     currentPendingApprovalStep?.approverUserId === currentUser.userId;
+
+  const updateApplicationStatusMutation = useUpdateApplicationStatus();
 
   // 画面表示時にユーザーロールを取得して状態にセットする
   useEffect(() => {
@@ -68,34 +68,27 @@ export default function ApplicationDetailPage() {
 
   // ステータス更新を実行する関数
   const handleConfirmStatusUpdate = async () => {
-    if (isStatusUpdating) {
+    if (updateApplicationStatusMutation.isPending) {
       return;
     }
     if (!application || !nextStatus) {
       return;
     }
 
-    setIsStatusUpdating(true);
     setStatusUpdateError("");
     setStatusUpdateMessage("");
 
     try {
-      await updateApplicationStatus(application.id, nextStatus);
-
-      // ステータス更新後に申請の詳細を再取得する
-      const refetchResult = await refetchApplication();
-
-      if (refetchResult.isError) {
-        throw refetchResult.error;
-      }
+      await updateApplicationStatusMutation.mutateAsync({
+        applicationId: application.id,
+        status: nextStatus,
+      });
 
       setStatusUpdateMessage("ステータスを更新しました。");
       setStatusConfirmOpen(false);
       setNextStatus(null);
     } catch {
       setStatusUpdateError("ステータスの更新に失敗しました。");
-    } finally {
-      setIsStatusUpdating(false);
     }
   };
 
@@ -149,7 +142,7 @@ export default function ApplicationDetailPage() {
           {canUpdateStatus && (
             <ApprovalActionButtons
               onOpenStatusConfirm={handleOpenStatusConfirm}
-              isStatusUpdating={isStatusUpdating}
+              isStatusUpdating={updateApplicationStatusMutation.isPending}
             />
           )}
 
@@ -161,7 +154,7 @@ export default function ApplicationDetailPage() {
       <ApplicationStatusConfirmDialog
         open={statusConfirmOpen}
         nextStatus={nextStatus}
-        isStatusUpdating={isStatusUpdating}
+        isStatusUpdating={updateApplicationStatusMutation.isPending}
         onClose={() => setStatusConfirmOpen(false)}
         onConfirm={handleConfirmStatusUpdate}
       />
