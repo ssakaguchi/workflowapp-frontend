@@ -2,22 +2,19 @@ import { Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { createApplication } from "../api/applicationsApi";
 import ApproverSelectBox from "../components/users/ApproverSelectBox";
 import { useApprovers } from "../hooks/useApprovers";
+import useCreateApplication from "../hooks/useCreateApplication";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
-
   const { data: approvers = [], isError: isApproversError } = useApprovers();
-
   const [approverValidationError, setApproverValidationError] = useState("");
   const approverFetchError = isApproversError
     ? "承認者一覧の取得に失敗しました。"
     : "";
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [titleError, setTitleError] = useState("");
   const [contentError, setContentError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -25,6 +22,8 @@ export default function ApplicationCreatePage() {
   const [selectedApproverUserId, setSelectedApproverUserId] = useState<
     number | undefined
   >(undefined);
+
+  const createApplicationMutation = useCreateApplication();
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -56,9 +55,7 @@ export default function ApplicationCreatePage() {
     }
 
     try {
-      setIsSubmitting(true);
-
-      await createApplication({
+      await createApplicationMutation.mutateAsync({
         title: title.trim(),
         content: content.trim(),
         approverUserId,
@@ -67,8 +64,6 @@ export default function ApplicationCreatePage() {
       navigate(`/applications`);
     } catch {
       setErrorMessage("申請の作成に失敗しました。");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -88,7 +83,7 @@ export default function ApplicationCreatePage() {
           variant="outlined"
           onClick={() => navigate("/applications")}
           sx={{ ml: 1 }}
-          disabled={isSubmitting}
+          disabled={createApplicationMutation.isPending}
         >
           一覧へ戻る
         </Button>
@@ -106,7 +101,7 @@ export default function ApplicationCreatePage() {
               setTitleError("");
             }}
             fullWidth
-            disabled={isSubmitting}
+            disabled={createApplicationMutation.isPending}
             aria-invalid={!!titleError}
             aria-describedby={titleError ? "title-error" : undefined}
           />
@@ -125,7 +120,7 @@ export default function ApplicationCreatePage() {
             multiline
             rows={8}
             fullWidth
-            disabled={isSubmitting}
+            disabled={createApplicationMutation.isPending}
             aria-invalid={!!contentError}
             aria-describedby={contentError ? "content-error" : undefined}
           />
@@ -142,9 +137,14 @@ export default function ApplicationCreatePage() {
               setApproverValidationError("");
             }}
             approverError={approverFetchError || approverValidationError}
+            disabled={createApplicationMutation.isPending}
           />
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
-            {isSubmitting ? "申請中..." : "申請"}
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={createApplicationMutation.isPending}
+          >
+            {createApplicationMutation.isPending ? "申請中..." : "申請"}
           </Button>
         </Stack>
       </form>
