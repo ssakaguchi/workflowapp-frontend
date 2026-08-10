@@ -137,6 +137,7 @@ export default function ApplicationCreatePage() {
               setApproverValidationError("");
             }}
             approverError={approverFetchError || approverValidationError}
+            disabled={createApplicationMutation.isPending}
           />
           <Button
             type="submit"

@@ -252,6 +252,7 @@ describe("ApplicationCreatePage", () => {
     expect(screen.getByRole("button", { name: "一覧へ戻る" })).toBeDisabled();
     expect(titleInput).toBeDisabled();
     expect(contentInput).toBeDisabled();
+    expect(approverSelect).toHaveAttribute("aria-disabled", "true");
   });
 
   test("承認者が未選択の場合、エラーメッセージを表示して作成APIを呼び出さないこと", async () => {

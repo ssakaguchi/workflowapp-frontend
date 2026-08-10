@@ -8,6 +8,7 @@ type ApproverSelectBoxProps = {
   selectedApproverUserId: number | undefined;
   setSelectedApproverUserId: (userId: number | undefined) => void;
   approverError: string;
+  disabled?: boolean;
 };
 
 // 承認者選択のセレクトボックスコンポーネント
@@ -16,11 +17,13 @@ const ApproverSelectBox = ({
   selectedApproverUserId,
   setSelectedApproverUserId,
   approverError,
+  disabled = false,
 }: ApproverSelectBoxProps) => {
   return (
     <TextField
       select
       label="承認者"
+      disabled={disabled}
       value={selectedApproverUserId ?? ""}
       onChange={(e) => {
         const value = e.target.value;
