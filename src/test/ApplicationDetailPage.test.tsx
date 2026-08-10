@@ -808,4 +808,37 @@ describe("ApplicationDetailPage", () => {
 
     expect(mockedUpdateApplicationStatus).toHaveBeenCalledTimes(1);
   });
+
+  test("ユーザー情報の取得に失敗した場合は認証情報を削除してログイン画面へ遷移すること", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValue(
+      new Error("ユーザー情報取得エラー"),
+    );
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
+    });
+
+    const { queryClient } = renderWithQueryClient(
+      <MemoryRouter initialEntries={["/applications/1"]}>
+        <Routes>
+          <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+          <Route path="/login" element={<div>ログイン画面</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("ログイン画面")).toBeInTheDocument();
+    });
+
+    expect(tokenStorage.remove).toHaveBeenCalledTimes(1);
+    expect(roleStorage.remove).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
+  });
 });
