@@ -48,7 +48,7 @@ export default function ApplicationDetailPage() {
   }, [currentUser]);
 
   useEffect(() => {
-    if (!isCurrentUserError) {
+    if (!isCurrentUserError || currentUser) {
       return;
     }
 
@@ -56,7 +56,7 @@ export default function ApplicationDetailPage() {
     roleStorage.remove();
     queryClient.clear();
     navigate("/login");
-  }, [isCurrentUserError, navigate, queryClient]);
+  }, [currentUser, isCurrentUserError, navigate, queryClient]);
 
   // ステータス更新の確認ダイアログを開く関数
   const handleOpenStatusConfirm = (status: "Approved" | "Rejected") => {

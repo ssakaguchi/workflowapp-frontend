@@ -21,7 +21,7 @@ const DashboardPage: React.FC = () => {
             <CircularProgress />
           </Box>
         )}
-        {!isLoading && isError && (
+        {!isLoading && isError && !user && (
           <Alert severity="error" sx={{ mt: 4 }}>
             ユーザーが認証されていません。ログインしてください。
           </Alert>

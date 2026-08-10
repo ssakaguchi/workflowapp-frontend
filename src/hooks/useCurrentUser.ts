@@ -7,5 +7,6 @@ export default function useCurrentUser() {
   return useQuery({
     queryKey: authQueryKeys.currentUser(),
     queryFn: getCurrentUser,
+    retry: false,
   });
 }
