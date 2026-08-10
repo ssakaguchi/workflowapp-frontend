@@ -221,25 +221,37 @@ describe("ApplicationCreatePage", () => {
     expect(screen.getByText("申請一覧")).toBeInTheDocument();
   });
 
-  test("申請中は一覧へ戻るボタンが無効になること", async () => {
+  test("申請中は入力欄と操作ボタンが無効になること", async () => {
     // arrange
     const user = userEvent.setup();
 
-    // createApplicationのモックが完了しないPromiseを返すように設定する
+    // 作成処理が完了しない状態を再現する
     mockedCreateApplication.mockImplementation(() => new Promise(() => {}));
 
     renderComponent();
 
-    await user.type(screen.getByLabelText("タイトル"), "新規申請タイトル");
-    await user.type(screen.getByLabelText("内容"), "新規申請内容");
-    await user.click(screen.getByLabelText("承認者 *"));
+    const titleInput = await screen.findByLabelText("タイトル");
+    const contentInput = screen.getByLabelText("内容");
+    const approverSelect = screen.getByLabelText("承認者 *");
+
+    await user.type(titleInput, "新規申請タイトル");
+    await user.type(contentInput, "新規申請内容");
+
+    await user.click(approverSelect);
     await user.click(screen.getByRole("option", { name: "承認者ユーザー" }));
 
     // act
     await user.click(screen.getByRole("button", { name: "申請" }));
 
     // assert
+    const submittingButton = await screen.findByRole("button", {
+      name: "申請中...",
+    });
+
+    expect(submittingButton).toBeDisabled();
     expect(screen.getByRole("button", { name: "一覧へ戻る" })).toBeDisabled();
+    expect(titleInput).toBeDisabled();
+    expect(contentInput).toBeDisabled();
   });
 
   test("承認者が未選択の場合、エラーメッセージを表示して作成APIを呼び出さないこと", async () => {
