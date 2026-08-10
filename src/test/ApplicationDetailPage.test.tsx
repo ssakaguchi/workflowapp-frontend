@@ -754,4 +754,58 @@ describe("ApplicationDetailPage", () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  test("ステータス更新中は確認ダイアログの操作ボタンが無効になること", async () => {
+    roleStorage.get = vi.fn().mockReturnValue("Approver");
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "出張申請",
+      content: "大阪出張",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [
+        {
+          id: 1,
+          stepOrder: 1,
+          approverUserId: 2,
+          status: "Pending",
+        },
+      ],
+    });
+
+    // 解決されないPromiseを返し、更新中の状態を維持する
+    mockedUpdateApplicationStatus.mockReturnValue(new Promise(() => {}));
+
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "承認",
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "実行する",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("button", {
+        name: "更新中...",
+      }),
+    ).toBeDisabled();
+
+    expect(
+      screen.getByRole("button", {
+        name: "キャンセル",
+      }),
+    ).toBeDisabled();
+
+    expect(mockedUpdateApplicationStatus).toHaveBeenCalledTimes(1);
+  });
 });

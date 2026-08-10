@@ -40,6 +40,5 @@ export default function useApplicationDetail(id: string | undefined) {
     application: query.data,
     isLoading: query.isLoading,
     errorMessage,
-    refetchApplication: query.refetch,
   };
 }
