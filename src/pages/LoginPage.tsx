@@ -81,6 +81,11 @@ export function LoginPage() {
             underline="hover"
             aria-disabled={loginMutation.isPending}
             tabIndex={loginMutation.isPending ? -1 : undefined}
+            onClick={(e) => {
+              if (loginMutation.isPending) {
+                e.preventDefault();
+              }
+            }}
             sx={{
               pointerEvents: loginMutation.isPending ? "none" : "auto",
               opacity: loginMutation.isPending ? 0.5 : 1,
