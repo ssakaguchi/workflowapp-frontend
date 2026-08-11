@@ -10,15 +10,14 @@ import {
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
-import { authApi } from "../api/authApi";
-import { roleStorage } from "../utils/roleStorage";
-import { tokenStorage } from "../utils/tokenStorage";
+import useLogin from "../hooks/useLogin";
 
 export function LoginPage() {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+  const loginMutation = useLogin();
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     // フォーム送信時の画面リロードを防止
@@ -28,14 +27,11 @@ export function LoginPage() {
     setErrorMessage("");
 
     try {
-      // APIを呼び出してログイン処理を実行
-      const result = await authApi.login({ loginId, password });
-
-      // ログイン成功後、JWTを保存して申請一覧ページへ遷移
-      tokenStorage.set(result.token);
-
-      // ユーザーロールを保存
-      roleStorage.set(result.role);
+      // ログイン処理を実行
+      await loginMutation.mutateAsync({
+        loginId,
+        password,
+      });
 
       navigate("/applications");
     } catch {
@@ -57,6 +53,7 @@ export function LoginPage() {
             margin="normal"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
+            disabled={loginMutation.isPending}
           />
           <TextField
             label="パスワード"
@@ -65,6 +62,7 @@ export function LoginPage() {
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={loginMutation.isPending}
           />
           <Button
             type="submit"
@@ -72,11 +70,22 @@ export function LoginPage() {
             variant="contained"
             fullWidth
             sx={{ mt: 2 }}
+            disabled={loginMutation.isPending}
           >
             ログイン
           </Button>
 
-          <Link component={RouterLink} to="/register" underline="hover">
+          <Link
+            component={RouterLink}
+            to="/register"
+            underline="hover"
+            aria-disabled={loginMutation.isPending}
+            tabIndex={loginMutation.isPending ? -1 : undefined}
+            sx={{
+              pointerEvents: loginMutation.isPending ? "none" : "auto",
+              opacity: loginMutation.isPending ? 0.5 : 1,
+            }}
+          >
             ユーザー登録はこちら
           </Link>
         </Box>
