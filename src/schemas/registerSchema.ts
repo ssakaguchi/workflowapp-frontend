@@ -6,7 +6,7 @@ export const registerSchema = z.object({
     .refine((value) => value.trim().length > 0, {
       message: "ログインIDを入力してください。",
     })
-    .refine((value) => value.length > 3, {
+    .refine((value) => value.length >= 3, {
       message: "ログインIDは3文字以上で入力してください。",
     }),
 
