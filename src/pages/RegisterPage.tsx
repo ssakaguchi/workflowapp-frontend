@@ -11,13 +11,13 @@ import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import useRegister from "../hooks/useRegister";
+import {
+  type RegisterFormValues,
+  registerSchema,
+} from "../schemas/registerSchema";
 
 // フォームの入力エラーを管理するための型定義
-type FormErrors = {
-  loginId?: string;
-  displayName?: string;
-  password?: string;
-};
+type FormErrors = Partial<Record<keyof RegisterFormValues, string>>;
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,27 +31,23 @@ const RegisterPage: React.FC = () => {
 
   // フォームの入力値を検証する関数
   const validate = (): FormErrors => {
-    const newErrors: FormErrors = {};
+    const result = registerSchema.safeParse({
+      loginId,
+      displayName,
+      password,
+    });
 
-    if (!loginId.trim()) {
-      newErrors.loginId = "ログインIDを入力してください。";
-    } else if (loginId.length < 3) {
-      newErrors.loginId = "ログインIDは3文字以上で入力してください。";
+    if (result.success) {
+      return {};
     }
 
-    if (!displayName.trim()) {
-      newErrors.displayName = "表示名を入力してください。";
-    } else if (displayName.length > 20) {
-      newErrors.displayName = "表示名は20文字以内で入力してください。";
-    }
-    if (!password.trim()) {
-      newErrors.password = "パスワードを入力してください。";
-    } else if (password.length < 8) {
-      newErrors.password = "パスワードは8文字以上で入力してください。";
-    } else if (!/^(?=.*[A-Za-z])(?=.*\d).+$/.test(password)) {
-      newErrors.password = "パスワードは英字と数字を含めてください。";
-    }
-    return newErrors;
+    const fieldErrors = result.error.flatten().fieldErrors;
+
+    return {
+      loginId: fieldErrors.loginId?.[0],
+      displayName: fieldErrors.displayName?.[0],
+      password: fieldErrors.password?.[0],
+    };
   };
 
   // フォームの送信処理を行う関数
