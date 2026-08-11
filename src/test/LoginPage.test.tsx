@@ -49,7 +49,6 @@ describe("LoginPage", () => {
     // arrange
     const user = userEvent.setup();
 
-    // arrange
     mockedLogin.mockResolvedValue({
       token: "test-token",
       role: "Applicant",
