@@ -69,6 +69,21 @@ describe("registerSchema", () => {
     }
   });
 
+  test("パスワードが空白のみの場合、検証に失敗すること", () => {
+    const result = registerSchema.safeParse({
+      ...validValues,
+      password: "   ",
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.password?.[0]).toBe(
+        "パスワードを入力してください。",
+      );
+    }
+  });
+
   test("パスワードが8文字未満の場合、検証に失敗すること", () => {
     const result = registerSchema.safeParse({
       ...validValues,
@@ -83,7 +98,6 @@ describe("registerSchema", () => {
       );
     }
   });
-
   test("パスワードに数字が含まれていない場合、検証に失敗すること", () => {
     const result = registerSchema.safeParse({
       ...validValues,
