@@ -33,7 +33,7 @@ describe("registerSchema", () => {
   test("ログインIDが3文字未満の場合、検証に失敗すること", () => {
     const result = registerSchema.safeParse({
       ...validValues,
-      loginId: "abc",
+      loginId: "ab",
     });
 
     expect(result.success).toBe(false);
@@ -43,6 +43,15 @@ describe("registerSchema", () => {
         "ログインIDは3文字以上で入力してください。",
       );
     }
+  });
+
+  test("ログインIDが3文字の場合、検証に成功すること", () => {
+    const result = registerSchema.safeParse({
+      ...validValues,
+      loginId: "abc",
+    });
+
+    expect(result.success).toBe(true);
   });
 
   test("表示名が20文字を超える場合、検証に失敗すること", () => {
