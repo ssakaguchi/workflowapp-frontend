@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -275,5 +275,72 @@ describe("ApplicationEditPage", () => {
     resolveUpdate();
 
     expect(await screen.findByText("申請詳細画面")).toBeInTheDocument();
+  });
+
+  test("必須項目が未入力の場合、項目ごとのエラーメッセージを表示すること", async () => {
+    const user = userEvent.setup();
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "変更前タイトル",
+      content: "変更前内容",
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
+      applicantUserId: 1,
+    });
+
+    renderComponent();
+
+    const titleInput = await screen.findByLabelText(/タイトル/);
+    const contentInput = screen.getByLabelText(/内容/);
+
+    await user.clear(titleInput);
+    await user.clear(contentInput);
+    await user.click(screen.getByRole("button", { name: "保存" }));
+
+    expect(
+      await screen.findByText("タイトルを入力してください。"),
+    ).toBeInTheDocument();
+
+    expect(screen.getByText("内容を入力してください。")).toBeInTheDocument();
+
+    expect(mockedUpdateApplication).not.toHaveBeenCalled();
+  });
+
+  test("入力値の前後の空白を除去して更新すること", async () => {
+    const user = userEvent.setup();
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "変更前タイトル",
+      content: "変更前内容",
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
+      applicantUserId: 1,
+    });
+
+    mockedUpdateApplication.mockResolvedValue();
+
+    renderComponent();
+
+    const titleInput = await screen.findByLabelText(/タイトル/);
+    const contentInput = screen.getByLabelText(/内容/);
+
+    await user.clear(titleInput);
+    await user.type(titleInput, "  変更後タイトル  ");
+
+    await user.clear(contentInput);
+    await user.type(contentInput, "  変更後内容  ");
+
+    await user.click(screen.getByRole("button", { name: "保存" }));
+
+    await waitFor(() => {
+      expect(mockedUpdateApplication).toHaveBeenCalledWith(1, {
+        title: "変更後タイトル",
+        content: "変更後内容",
+      });
+    });
   });
 });
