@@ -7,9 +7,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import axios from "axios";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
+
+import useRegister from "../hooks/useRegister";
 
 // フォームの入力エラーを管理するための型定義
 type FormErrors = {
@@ -20,14 +21,13 @@ type FormErrors = {
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-
+  const registerMutation = useRegister();
   const [loginId, setLoginId] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [errorMessage, setErrorMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // フォームの入力値を検証する関数
   const validate = (): FormErrors => {
@@ -68,29 +68,18 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    // 登録処理を開始する前に送信状態を設定
-    setIsSubmitting(true);
     try {
-      await axios.post("http://localhost:5071/api/auth/register", {
+      await registerMutation.mutateAsync({
         loginId,
         displayName,
         password,
       });
 
       navigate("/login");
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("status:", error.response?.status);
-        console.error("data:", error.response?.data);
-      } else {
-        console.error(error);
-      }
+    } catch {
       setErrorMessage(
         "ユーザー登録に失敗しました。入力内容を確認してください。",
       );
-    } finally {
-      // 登録処理が完了した後、送信状態をリセット
-      setIsSubmitting(false);
     }
   };
 
@@ -114,6 +103,7 @@ const RegisterPage: React.FC = () => {
               required
               error={!!errors.loginId}
               helperText={errors.loginId}
+              disabled={registerMutation.isPending}
             />
 
             <TextField
@@ -127,6 +117,7 @@ const RegisterPage: React.FC = () => {
               required
               error={!!errors.displayName}
               helperText={errors.displayName}
+              disabled={registerMutation.isPending}
             />
 
             <TextField
@@ -141,17 +132,37 @@ const RegisterPage: React.FC = () => {
               required
               error={!!errors.password}
               helperText={errors.password}
+              disabled={registerMutation.isPending}
             />
 
             {errorMessage && (
               <Typography color="error">{errorMessage}</Typography>
             )}
 
-            <Button type="submit" variant="contained" disabled={isSubmitting}>
-              {isSubmitting ? "登録中..." : "登録"}
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={registerMutation.isPending}
+            >
+              {registerMutation.isPending ? "登録中..." : "登録"}
             </Button>
 
-            <Link component={RouterLink} to="/login" underline="hover">
+            <Link
+              component={RouterLink}
+              to="/login"
+              underline="hover"
+              aria-disabled={registerMutation.isPending}
+              tabIndex={registerMutation.isPending ? -1 : undefined}
+              onClick={(e) => {
+                if (registerMutation.isPending) {
+                  e.preventDefault();
+                }
+              }}
+              sx={{
+                pointerEvents: registerMutation.isPending ? "none" : "auto",
+                opacity: registerMutation.isPending ? 0.5 : 1,
+              }}
+            >
               ログイン画面へ
             </Link>
           </Stack>
