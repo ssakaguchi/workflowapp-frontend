@@ -131,10 +131,10 @@ describe("ApplicationCreatePage", () => {
     const contentInput = await screen.findByLabelText("内容");
 
     await user.clear(titleInput);
-    await user.type(titleInput, "新規申請タイトル");
+    await user.type(titleInput, "　新規申請タイトル　");
 
     await user.clear(contentInput);
-    await user.type(contentInput, "新規申請内容");
+    await user.type(contentInput, "　新規申請内容　");
 
     const approverSelect = await screen.findByLabelText("承認者 *");
 
@@ -283,5 +283,52 @@ describe("ApplicationCreatePage", () => {
     expect(
       await screen.findByText("承認者一覧の取得に失敗しました。"),
     ).toBeInTheDocument();
+  });
+
+  test("タイトルと内容が空白のみの場合、エラーを表示して申請を作成しないこと", async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.type(screen.getByLabelText("タイトル"), "   ");
+    await user.type(screen.getByLabelText("内容"), "   ");
+
+    await user.click(screen.getByRole("button", { name: "申請" }));
+
+    expect(
+      await screen.findByText("タイトルを入力してください。"),
+    ).toBeInTheDocument();
+
+    expect(screen.getByText("内容を入力してください。")).toBeInTheDocument();
+
+    expect(mockedCreateApplication).not.toHaveBeenCalled();
+  });
+
+  test("タイトルと内容の前後の空白を除去して作成APIへ渡すこと", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    mockedCreateApplication.mockResolvedValue(undefined);
+
+    renderComponent();
+
+    await user.type(
+      await screen.findByLabelText("タイトル"),
+      "  新規申請タイトル  ",
+    );
+    await user.type(screen.getByLabelText("内容"), "  新規申請内容  ");
+
+    await user.click(screen.getByLabelText("承認者 *"));
+    await user.click(screen.getByRole("option", { name: "承認者ユーザー" }));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "申請" }));
+
+    // assert
+    expect(mockedCreateApplication).toHaveBeenCalledWith({
+      title: "新規申請タイトル",
+      content: "新規申請内容",
+      approverUserId: 1,
+    });
   });
 });

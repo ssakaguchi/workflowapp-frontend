@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import ApproverSelectBox from "../components/users/ApproverSelectBox";
 import { useApprovers } from "../hooks/useApprovers";
 import useCreateApplication from "../hooks/useCreateApplication";
+import { applicationCreateSchema } from "../schemas/applicationCreateSchema";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
@@ -27,40 +28,30 @@ export default function ApplicationCreatePage() {
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     setTitleError("");
     setContentError("");
+    setApproverValidationError("");
     setErrorMessage("");
 
-    let hasError = false;
+    const result = applicationCreateSchema.safeParse({
+      title,
+      content,
+      approverUserId: selectedApproverUserId,
+    });
 
-    if (!title.trim()) {
-      setTitleError("タイトルを入力してください。");
-      hasError = true;
-    }
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
 
-    if (!content.trim()) {
-      setContentError("内容を入力してください。");
-      hasError = true;
-    }
+      setTitleError(fieldErrors.title?.[0] ?? "");
+      setContentError(fieldErrors.content?.[0] ?? "");
+      setApproverValidationError(fieldErrors.approverUserId?.[0] ?? "");
 
-    if (!selectedApproverUserId) {
-      setApproverValidationError("承認者を選択してください。");
-      hasError = true;
-    }
-
-    const approverUserId = selectedApproverUserId;
-
-    if (hasError || approverUserId === undefined) {
       return;
     }
 
     try {
-      await createApplicationMutation.mutateAsync({
-        title: title.trim(),
-        content: content.trim(),
-        approverUserId,
-      });
-
+      await createApplicationMutation.mutateAsync(result.data);
       navigate(`/applications`);
     } catch {
       setErrorMessage("申請の作成に失敗しました。");
