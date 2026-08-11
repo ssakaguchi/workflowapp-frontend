@@ -138,7 +138,7 @@ export default function ApplicationEditPage() {
               rows={5}
               fullWidth
               disabled={isSaving}
-              error={Boolean(titleError)}
+              error={Boolean(contentError)}
               helperText={contentError}
             />
 

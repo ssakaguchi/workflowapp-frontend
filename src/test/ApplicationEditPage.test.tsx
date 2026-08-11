@@ -125,6 +125,7 @@ describe("ApplicationEditPage", () => {
       await screen.findByText("内容を入力してください。"),
     ).toBeInTheDocument();
     expect(mockedUpdateApplication).not.toHaveBeenCalled();
+    expect(contentInput).toHaveAttribute("aria-invalid", "true");
   });
 
   test("申請の更新に成功すること", async () => {
