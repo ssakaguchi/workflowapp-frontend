@@ -192,4 +192,37 @@ describe("LoginPage", () => {
       });
     });
   });
+
+  test("ログイン失敗後に未入力で再送信した場合、以前のログインエラーを消去すること", async () => {
+    const user = userEvent.setup();
+
+    mockedLogin.mockRejectedValue(new Error("ログイン失敗"));
+
+    renderComponent();
+
+    const loginIdInput = screen.getByLabelText("ログインID");
+    const passwordInput = screen.getByLabelText("パスワード");
+    const loginButton = screen.getByRole("button", { name: "ログイン" });
+
+    await user.type(loginIdInput, "applicant01");
+    await user.type(passwordInput, "wrong-password");
+    await user.click(loginButton);
+
+    expect(
+      await screen.findByText("ログインに失敗しました。"),
+    ).toBeInTheDocument();
+
+    await user.clear(loginIdInput);
+    await user.click(loginButton);
+
+    expect(
+      screen.queryByText("ログインに失敗しました。"),
+    ).not.toBeInTheDocument();
+
+    expect(
+      await screen.findByText("ログインIDを入力してください。"),
+    ).toBeInTheDocument();
+
+    expect(mockedLogin).toHaveBeenCalledTimes(1);
+  });
 });
