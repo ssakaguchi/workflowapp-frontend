@@ -44,9 +44,6 @@ export function LoginPage() {
       return;
     }
 
-    // 送信時にエラーメッセージをリセット
-    setErrorMessage("");
-
     try {
       // ログイン処理を実行
       await loginMutation.mutateAsync(result.data);
