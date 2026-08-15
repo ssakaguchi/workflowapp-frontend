@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import useApplicationDetail from "../hooks/useApplicationDetail";
 import useUpdateApplication from "../hooks/useUpdateApplication";
+import { applicationEditSchema } from "../schemas/applicationEditSchema";
 
 export default function ApplicationEditPage() {
   const { id } = useParams();
@@ -15,6 +16,8 @@ export default function ApplicationEditPage() {
   const isSaving = updateApplicationMutation.isPending;
   const { application, isLoading, errorMessage } = useApplicationDetail(id);
   const initializedApplicationId = useRef<number | null>(null);
+  const [titleError, setTitleError] = useState("");
+  const [contentError, setContentError] = useState("");
 
   useEffect(() => {
     if (!application || initializedApplicationId.current === application.id) {
@@ -29,6 +32,8 @@ export default function ApplicationEditPage() {
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaveErrorMessage("");
+    setTitleError("");
+    setContentError("");
 
     if (!id) {
       setSaveErrorMessage("申請IDが指定されていません。");
@@ -38,7 +43,9 @@ export default function ApplicationEditPage() {
     const applicationId = Number(id);
 
     if (!application) {
-      setSaveErrorMessage("申請の詳細を取得できていません。再読み込みしてください。");
+      setSaveErrorMessage(
+        "申請の詳細を取得できていません。再読み込みしてください。",
+      );
       return;
     }
 
@@ -47,23 +54,24 @@ export default function ApplicationEditPage() {
       return;
     }
 
-    if (!title.trim()) {
-      setSaveErrorMessage("タイトルを入力してください。");
-      return;
-    }
+    const result = applicationEditSchema.safeParse({
+      title,
+      content,
+    });
 
-    if (!content.trim()) {
-      setSaveErrorMessage("内容を入力してください。");
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+
+      setTitleError(fieldErrors.title?.[0] ?? "");
+      setContentError(fieldErrors.content?.[0] ?? "");
+
       return;
     }
 
     try {
       await updateApplicationMutation.mutateAsync({
         applicationId,
-        request: {
-          title: title.trim(),
-          content: content.trim(),
-        },
+        request: result.data,
       });
 
       navigate(`/applications/${applicationId}`);
@@ -117,6 +125,8 @@ export default function ApplicationEditPage() {
               onChange={(e) => setTitle(e.target.value)}
               disabled={isSaving}
               fullWidth
+              error={Boolean(titleError)}
+              helperText={titleError}
             />
 
             <TextField
@@ -128,6 +138,8 @@ export default function ApplicationEditPage() {
               rows={5}
               fullWidth
               disabled={isSaving}
+              error={Boolean(contentError)}
+              helperText={contentError}
             />
 
             {saveErrorMessage && (
