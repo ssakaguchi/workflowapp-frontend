@@ -52,6 +52,10 @@ export function LoginPage() {
     }
   };
 
+  const onInvalid = () => {
+    setErrorMessage("");
+  };
+
   return (
     <Container maxWidth="sm" sx={{ mt: 8 }}>
       <Paper sx={{ p: 4 }}>
@@ -59,7 +63,11 @@ export function LoginPage() {
           ログイン
         </Typography>
 
-        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit(onSubmit, onInvalid)} // フォーム送信時にonSubmit関数を呼び出す。バリデーションエラーがある場合はonInvalid関数を呼び出す
+          noValidate // ブラウザのデフォルトのバリデーションを無効化する
+        >
           <TextField
             label="ログインID"
             fullWidth
