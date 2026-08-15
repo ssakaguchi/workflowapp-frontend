@@ -9,13 +9,15 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-
+import { loginSchema } from "../schemas/loginSchema";
 import useLogin from "../hooks/useLogin";
 
 export function LoginPage() {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [loginIdError, setLoginIdError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
   const loginMutation = useLogin();
 
@@ -23,15 +25,30 @@ export function LoginPage() {
     // フォーム送信時の画面リロードを防止
     e.preventDefault();
 
+    setLoginIdError("");
+    setPasswordError("");
+    setErrorMessage("");
+
+    const result = loginSchema.safeParse({
+      loginId,
+      password,
+    });
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+
+      setLoginIdError(fieldErrors.loginId?.[0] ?? "");
+      setPasswordError(fieldErrors.password?.[0] ?? "");
+
+      return;
+    }
+
     // 送信時にエラーメッセージをリセット
     setErrorMessage("");
 
     try {
       // ログイン処理を実行
-      await loginMutation.mutateAsync({
-        loginId,
-        password,
-      });
+      await loginMutation.mutateAsync(result.data);
 
       navigate("/applications");
     } catch {
@@ -53,6 +70,8 @@ export function LoginPage() {
             margin="normal"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
+            error={Boolean(loginIdError)}
+            helperText={loginIdError}
             disabled={loginMutation.isPending}
           />
           <TextField
@@ -62,6 +81,8 @@ export function LoginPage() {
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            error={Boolean(passwordError)}
+            helperText={passwordError}
             disabled={loginMutation.isPending}
           />
           <Button
