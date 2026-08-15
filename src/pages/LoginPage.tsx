@@ -30,7 +30,7 @@ export function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema), // zodResolverを使用して、loginSchemaに基づいたバリデーションを行う
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       loginId: "",
       password: "",
