@@ -1,3 +1,4 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
   Button,
@@ -8,46 +9,43 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import useLogin from "../hooks/useLogin";
-import { loginSchema } from "../schemas/loginSchema";
+import { type LoginFormValues, loginSchema } from "../schemas/loginSchema";
 
 export function LoginPage() {
-  const [loginId, setLoginId] = useState("");
-  const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [loginIdError, setLoginIdError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
   const loginMutation = useLogin();
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    // フォーム送信時の画面リロードを防止
-    e.preventDefault();
+  /**
+   * react-hook-formのuseFormフックを使用してフォームの状態を管理する
+   * zodResolverを使用して、loginSchemaに基づいたバリデーションを行う
+   * defaultValuesでフォームの初期値を設定する
+   */
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema), // zodResolverを使用して、loginSchemaに基づいたバリデーションを行う
+    defaultValues: {
+      loginId: "",
+      password: "",
+    },
+  });
 
-    setLoginIdError("");
-    setPasswordError("");
+  /**
+   * フォームの送信時に呼び出される関数
+   * @param values フォームの入力値
+   */
+  const onSubmit = async (values: LoginFormValues) => {
     setErrorMessage("");
 
-    const result = loginSchema.safeParse({
-      loginId,
-      password,
-    });
-
-    if (!result.success) {
-      const fieldErrors = result.error.flatten().fieldErrors;
-
-      setLoginIdError(fieldErrors.loginId?.[0] ?? "");
-      setPasswordError(fieldErrors.password?.[0] ?? "");
-
-      return;
-    }
-
     try {
-      // ログイン処理を実行
-      await loginMutation.mutateAsync(result.data);
-
+      await loginMutation.mutateAsync(values);
       navigate("/applications");
     } catch {
       setErrorMessage("ログインに失敗しました。");
@@ -61,15 +59,14 @@ export function LoginPage() {
           ログイン
         </Typography>
 
-        <Box component="form" onSubmit={handleSubmit}>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <TextField
             label="ログインID"
             fullWidth
             margin="normal"
-            value={loginId}
-            onChange={(e) => setLoginId(e.target.value)}
-            error={Boolean(loginIdError)}
-            helperText={loginIdError}
+            {...register("loginId")}
+            error={Boolean(errors.loginId)}
+            helperText={errors.loginId?.message}
             disabled={loginMutation.isPending}
           />
           <TextField
@@ -77,10 +74,9 @@ export function LoginPage() {
             type="password"
             fullWidth
             margin="normal"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={Boolean(passwordError)}
-            helperText={passwordError}
+            {...register("password")} // react-hook-formのregister関数を使用して、フォームの入力値を管理する
+            error={Boolean(errors.password)}
+            helperText={errors.password?.message}
             disabled={loginMutation.isPending}
           />
           <Button
