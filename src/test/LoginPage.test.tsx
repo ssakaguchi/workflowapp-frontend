@@ -140,4 +140,56 @@ describe("LoginPage", () => {
 
     expect(mockedLogin).toHaveBeenCalledTimes(1);
   });
+
+  test("必須項目が未入力の場合、項目ごとのエラーメッセージを表示すること", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    const loginIdInput = screen.getByLabelText("ログインID");
+    const passwordInput = screen.getByLabelText("パスワード");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "ログイン" }));
+
+    // assert
+    expect(
+      await screen.findByText("ログインIDを入力してください。"),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("パスワードを入力してください。"),
+    ).toBeInTheDocument();
+
+    expect(loginIdInput).toHaveAttribute("aria-invalid", "true");
+    expect(passwordInput).toHaveAttribute("aria-invalid", "true");
+
+    expect(mockedLogin).not.toHaveBeenCalled();
+  });
+
+  test("ログインIDの前後の空白を除去してログインすること", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    mockedLogin.mockResolvedValue({
+      token: "test-token",
+      role: "Applicant",
+    });
+
+    renderComponent();
+
+    // act
+    await user.type(screen.getByLabelText("ログインID"), "  applicant01  ");
+    await user.type(screen.getByLabelText("パスワード"), "password");
+    await user.click(screen.getByRole("button", { name: "ログイン" }));
+
+    // assert
+    await waitFor(() => {
+      expect(mockedLogin).toHaveBeenCalledWith({
+        loginId: "applicant01",
+        password: "password",
+      });
+    });
+  });
 });
