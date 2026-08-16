@@ -1,39 +1,53 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 
 import useApplicationDetail from "../hooks/useApplicationDetail";
 import useUpdateApplication from "../hooks/useUpdateApplication";
-import { applicationEditSchema } from "../schemas/applicationEditSchema";
+import {
+  type ApplicationEditFormValues,
+  applicationEditSchema,
+} from "../schemas/applicationEditSchema";
 
 export default function ApplicationEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
   const [saveErrorMessage, setSaveErrorMessage] = useState("");
   const updateApplicationMutation = useUpdateApplication();
   const isSaving = updateApplicationMutation.isPending;
   const { application, isLoading, errorMessage } = useApplicationDetail(id);
   const initializedApplicationId = useRef<number | null>(null);
-  const [titleError, setTitleError] = useState("");
-  const [contentError, setContentError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ApplicationEditFormValues>({
+    resolver: zodResolver(applicationEditSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+    },
+  });
 
   useEffect(() => {
     if (!application || initializedApplicationId.current === application.id) {
       return;
     }
 
-    setTitle(application.title);
-    setContent(application.content);
-    initializedApplicationId.current = application.id;
-  }, [application]);
+    reset({
+      title: application.title,
+      content: application.content,
+    });
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    initializedApplicationId.current = application.id;
+  }, [application, reset]);
+
+  const onSubmit = async (values: ApplicationEditFormValues) => {
     setSaveErrorMessage("");
-    setTitleError("");
-    setContentError("");
 
     if (!id) {
       setSaveErrorMessage("申請IDが指定されていません。");
@@ -42,6 +56,11 @@ export default function ApplicationEditPage() {
 
     const applicationId = Number(id);
 
+    if (Number.isNaN(applicationId)) {
+      setSaveErrorMessage("申請IDが不正です。");
+      return;
+    }
+
     if (!application) {
       setSaveErrorMessage(
         "申請の詳細を取得できていません。再読み込みしてください。",
@@ -49,35 +68,20 @@ export default function ApplicationEditPage() {
       return;
     }
 
-    if (Number.isNaN(applicationId)) {
-      setSaveErrorMessage("申請IDが不正です。");
-      return;
-    }
-
-    const result = applicationEditSchema.safeParse({
-      title,
-      content,
-    });
-
-    if (!result.success) {
-      const fieldErrors = result.error.flatten().fieldErrors;
-
-      setTitleError(fieldErrors.title?.[0] ?? "");
-      setContentError(fieldErrors.content?.[0] ?? "");
-
-      return;
-    }
-
     try {
       await updateApplicationMutation.mutateAsync({
         applicationId,
-        request: result.data,
+        request: values,
       });
 
       navigate(`/applications/${applicationId}`);
     } catch {
       setSaveErrorMessage("申請の更新に失敗しました。");
     }
+  };
+
+  const onInvalid = () => {
+    setSaveErrorMessage("");
   };
 
   return (
@@ -115,31 +119,29 @@ export default function ApplicationEditPage() {
       {!isLoading && errorMessage && <p>{errorMessage}</p>}
 
       {!isLoading && !errorMessage && (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
           <Stack spacing={2}>
             <TextField
               label="タイトル"
               id="title"
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              {...register("title")}
               disabled={isSaving}
               fullWidth
-              error={Boolean(titleError)}
-              helperText={titleError}
+              error={Boolean(errors.title)}
+              helperText={errors.title?.message}
             />
 
             <TextField
               label="内容"
               id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+              {...register("content")}
               multiline
               rows={5}
               fullWidth
               disabled={isSaving}
-              error={Boolean(contentError)}
-              helperText={contentError}
+              error={Boolean(errors.content)}
+              helperText={errors.content?.message}
             />
 
             {saveErrorMessage && (
