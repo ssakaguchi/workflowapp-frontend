@@ -39,8 +39,8 @@ export default function ApplicationEditPage() {
     }
 
     reset({
-      title: application?.title,
-      content: application?.content,
+      title: application.title,
+      content: application.content,
     });
 
     initializedApplicationId.current = application.id;
