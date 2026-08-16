@@ -151,4 +151,51 @@ describe("RegisterPage", () => {
     expect(mockedRegister).not.toHaveBeenCalled();
     expect(screen.queryByText("ログイン画面")).not.toBeInTheDocument();
   });
+
+  test("登録失敗後に不正な入力で再送信した場合、以前の登録エラーを消去すること", async () => {
+    const user = userEvent.setup();
+
+    mockedRegister.mockRejectedValue(new Error("登録失敗"));
+
+    renderComponent();
+
+    const loginIdInput = screen.getByLabelText(/ログインID/);
+    const displayNameInput = screen.getByLabelText(/表示名/);
+    const passwordInput = screen.getByLabelText(/パスワード/);
+    const registerButton = screen.getByRole("button", { name: "登録" });
+
+    // 1回目は正常な入力でAPIを呼び出し、登録を失敗させる
+    await user.type(loginIdInput, "applicant01");
+    await user.type(displayNameInput, "テストユーザー");
+    await user.type(passwordInput, "password123");
+    await user.click(registerButton);
+
+    // APIエラーが表示されたことを確認
+    expect(
+      await screen.findByText(
+        "ユーザー登録に失敗しました。入力内容を確認してください。",
+      ),
+    ).toBeInTheDocument();
+
+    // 2回目はバリデーションエラーになる状態で送信
+    await user.clear(loginIdInput);
+    await user.click(registerButton);
+
+    // 以前のAPIエラーが消えることを確認
+    await waitFor(() => {
+      expect(
+        screen.queryByText(
+          "ユーザー登録に失敗しました。入力内容を確認してください。",
+        ),
+      ).not.toBeInTheDocument();
+    });
+
+    // 今回の入力内容に対応するエラーが表示されることを確認
+    expect(
+      await screen.findByText("ログインIDを入力してください。"),
+    ).toBeInTheDocument();
+
+    // 2回目はバリデーションエラーなのでAPIが再度呼ばれない
+    expect(mockedRegister).toHaveBeenCalledTimes(1);
+  });
 });
