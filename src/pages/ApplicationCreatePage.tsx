@@ -1,61 +1,53 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import ApproverSelectBox from "../components/users/ApproverSelectBox";
 import { useApprovers } from "../hooks/useApprovers";
 import useCreateApplication from "../hooks/useCreateApplication";
-import { applicationCreateSchema } from "../schemas/applicationCreateSchema";
+import {
+  type ApplicationCreateFormValues,
+  applicationCreateSchema,
+} from "../schemas/applicationCreateSchema";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
   const { data: approvers = [], isError: isApproversError } = useApprovers();
-  const [approverValidationError, setApproverValidationError] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const approverFetchError = isApproversError
     ? "承認者一覧の取得に失敗しました。"
     : "";
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [titleError, setTitleError] = useState("");
-  const [contentError, setContentError] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const [selectedApproverUserId, setSelectedApproverUserId] = useState<
-    number | undefined
-  >(undefined);
-
   const createApplicationMutation = useCreateApplication();
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ApplicationCreateFormValues>({
+    resolver: zodResolver(applicationCreateSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      approverUserId: undefined,
+    },
+  });
 
-    setTitleError("");
-    setContentError("");
-    setApproverValidationError("");
+  const onSubmit = async (values: ApplicationCreateFormValues) => {
     setErrorMessage("");
 
-    const result = applicationCreateSchema.safeParse({
-      title,
-      content,
-      approverUserId: selectedApproverUserId,
-    });
-
-    if (!result.success) {
-      const fieldErrors = result.error.flatten().fieldErrors;
-
-      setTitleError(fieldErrors.title?.[0] ?? "");
-      setContentError(fieldErrors.content?.[0] ?? "");
-      setApproverValidationError(fieldErrors.approverUserId?.[0] ?? "");
-
-      return;
-    }
-
     try {
-      await createApplicationMutation.mutateAsync(result.data);
+      await createApplicationMutation.mutateAsync(values);
       navigate(`/applications`);
     } catch {
       setErrorMessage("申請の作成に失敗しました。");
     }
+  };
+
+  const onInvalid = () => {
+    setErrorMessage("");
   };
 
   return (
@@ -80,55 +72,50 @@ export default function ApplicationCreatePage() {
         </Button>
       </Stack>
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
         <div style={{ marginBottom: "12px" }}>
           <TextField
             id="title"
             label="タイトル"
             type="text"
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              setTitleError("");
-            }}
+            {...register("title")}
             fullWidth
             disabled={createApplicationMutation.isPending}
-            aria-invalid={!!titleError}
-            aria-describedby={titleError ? "title-error" : undefined}
+            error={Boolean(errors.title)}
+            helperText={errors.title?.message}
           />
-          {titleError && <p id="title-error">{titleError}</p>}
         </div>
 
         <Stack spacing={2}>
           <TextField
             id="content"
             label="内容"
-            value={content}
-            onChange={(e) => {
-              setContent(e.target.value);
-              setContentError("");
-            }}
+            {...register("content")}
             multiline
             rows={8}
             fullWidth
             disabled={createApplicationMutation.isPending}
-            aria-invalid={!!contentError}
-            aria-describedby={contentError ? "content-error" : undefined}
+            error={Boolean(errors.content)}
+            helperText={errors.content?.message}
           />
-          {contentError && <p id="content-error">{contentError}</p>}
 
           {errorMessage && <p role="alert">{errorMessage}</p>}
 
           {/* 承認者選択のセレクトボックスコンポーネント */}
-          <ApproverSelectBox
-            approvers={approvers}
-            selectedApproverUserId={selectedApproverUserId}
-            setSelectedApproverUserId={(userId) => {
-              setSelectedApproverUserId(userId);
-              setApproverValidationError("");
-            }}
-            approverError={approverFetchError || approverValidationError}
-            disabled={createApplicationMutation.isPending}
+          <Controller
+            name="approverUserId"
+            control={control}
+            render={({ field, fieldState }) => (
+              <ApproverSelectBox
+                approvers={approvers}
+                selectedApproverUserId={field.value}
+                setSelectedApproverUserId={field.onChange}
+                approverError={
+                  approverFetchError || fieldState.error?.message || ""
+                }
+                disabled={createApplicationMutation.isPending}
+              />
+            )}
           />
           <Button
             type="submit"
