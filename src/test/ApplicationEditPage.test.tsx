@@ -344,4 +344,51 @@ describe("ApplicationEditPage", () => {
       });
     });
   });
+
+  test("更新失敗後に不正な入力で再送信した場合、以前の更新エラーを消去すること", async () => {
+    const user = userEvent.setup();
+
+    mockedGetApplicationById.mockResolvedValue({
+      id: 1,
+      title: "更新前のタイトル",
+      content: "更新前の内容",
+      applicantUserId: 1,
+      status: "Pending",
+      createdAt: "2026-01-01T00:00:00Z",
+      approvalSteps: [],
+    });
+
+    mockedUpdateApplication.mockRejectedValue(new Error("更新失敗"));
+
+    renderComponent();
+
+    const titleInput = await screen.findByLabelText("タイトル");
+    const saveButton = screen.getByRole("button", { name: "保存" });
+
+    // 1回目は有効な入力でAPIを呼び出し、更新を失敗させる
+    await user.click(saveButton);
+
+    expect(
+      await screen.findByText("申請の更新に失敗しました。"),
+    ).toBeInTheDocument();
+
+    // 2回目はバリデーションエラーになる状態で送信する
+    await user.clear(titleInput);
+    await user.click(saveButton);
+
+    // 以前のAPIエラーが消去されること
+    await waitFor(() => {
+      expect(
+        screen.queryByText("申請の更新に失敗しました。"),
+      ).not.toBeInTheDocument();
+    });
+
+    // 今回の入力内容に対応するエラーが表示されること
+    expect(
+      await screen.findByText("タイトルを入力してください。"),
+    ).toBeInTheDocument();
+
+    // バリデーション失敗時にはAPIが再実行されないこと
+    expect(mockedUpdateApplication).toHaveBeenCalledTimes(1);
+  });
 });
