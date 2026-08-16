@@ -1,3 +1,4 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
   Button,
@@ -8,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import useRegister from "../hooks/useRegister";
@@ -16,67 +18,46 @@ import {
   registerSchema,
 } from "../schemas/registerSchema";
 
-// フォームの入力エラーを管理するための型定義
-type FormErrors = Partial<Record<keyof RegisterFormValues, string>>;
-
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const registerMutation = useRegister();
-  const [loginId, setLoginId] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [password, setPassword] = useState("");
-
-  const [errors, setErrors] = useState<FormErrors>({});
   const [errorMessage, setErrorMessage] = useState("");
 
-  // フォームの入力値を検証する関数
-  const validate = (): FormErrors => {
-    const result = registerSchema.safeParse({
-      loginId,
-      displayName,
-      password,
-    });
+  /**
+   * react-hook-formのuseFormフックを使用してフォームの状態を管理する
+   */
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      loginId: "",
+      displayName: "",
+      password: "",
+    },
+  });
 
-    if (result.success) {
-      return {};
-    }
-
-    const fieldErrors = result.error.flatten().fieldErrors;
-
-    return {
-      loginId: fieldErrors.loginId?.[0],
-      displayName: fieldErrors.displayName?.[0],
-      password: fieldErrors.password?.[0],
-    };
-  };
-
-  // フォームの送信処理を行う関数
-  const handleRegister = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  /**
+   * フォームの送信時に呼び出される関数
+   * @param values フォームの入力値
+   */
+  const onSubmit = async (values: RegisterFormValues) => {
     setErrorMessage("");
 
-    const validationErrors = validate();
-    setErrors(validationErrors);
-
-    // バリデーションエラーがある場合は登録処理を中断
-    if (Object.keys(validationErrors).length > 0) {
-      return;
-    }
-
     try {
-      await registerMutation.mutateAsync({
-        loginId,
-        displayName,
-        password,
-      });
-
+      await registerMutation.mutateAsync(values);
       navigate("/login");
     } catch {
       setErrorMessage(
         "ユーザー登録に失敗しました。入力内容を確認してください。",
       );
     }
+  };
+
+  const onInvalid = () => {
+    setErrorMessage("");
   };
 
   return (
@@ -86,48 +67,43 @@ const RegisterPage: React.FC = () => {
           ユーザー登録
         </Typography>
 
-        <Box component="form" onSubmit={handleRegister}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit(
+            onSubmit, // バリデーション成功時
+            onInvalid, // バリデーション失敗時
+          )}
+          noValidate // ブラウザのデフォルトのバリデーションを無効化する
+        >
           <Stack spacing={2}>
             <TextField
               label="ログインID"
-              value={loginId}
-              onChange={(e) => {
-                setLoginId(e.target.value);
-                setErrors((prev) => ({ ...prev, loginId: undefined }));
-              }}
+              {...register("loginId")}
               fullWidth
               required
-              error={!!errors.loginId}
-              helperText={errors.loginId}
+              error={Boolean(errors.loginId)}
+              helperText={errors.loginId?.message}
               disabled={registerMutation.isPending}
             />
 
             <TextField
               label="表示名"
-              value={displayName}
-              onChange={(e) => {
-                setDisplayName(e.target.value);
-                setErrors((prev) => ({ ...prev, displayName: undefined }));
-              }}
+              {...register("displayName")}
               fullWidth
               required
-              error={!!errors.displayName}
-              helperText={errors.displayName}
+              error={Boolean(errors.displayName)}
+              helperText={errors.displayName?.message}
               disabled={registerMutation.isPending}
             />
 
             <TextField
               label="パスワード"
               type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setErrors((prev) => ({ ...prev, password: undefined }));
-              }}
+              {...register("password")}
               fullWidth
               required
-              error={!!errors.password}
-              helperText={errors.password}
+              error={Boolean(errors.password)}
+              helperText={errors.password?.message}
               disabled={registerMutation.isPending}
             />
 
