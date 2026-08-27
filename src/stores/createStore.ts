@@ -1,21 +1,21 @@
 import { useSyncExternalStore } from "react";
 
 type StoreSnapshot<T> = {
-  data: T[];
+  data: T;
   revision: number;
 };
 
 type Store<T> = {
   store: StoreSnapshot<T>;
-  updateChanges: (nextData: T[]) => void;
+  updateChanges: (nextData: T) => void;
 };
 
 /**
  * 汎用ストアを生成する
  * @returns ストアを操作するカスタムフック
  */
-export const createStore = <T>(): (() => Store<T>) => {
-  let data: T[] = [];
+export const createStore = <T>(initialData: T): (() => Store<T>) => {
+  let data: T = initialData;
   let listeners: (() => void)[] = [];
   let revision = 0;
 
@@ -60,9 +60,9 @@ export const createStore = <T>(): (() => Store<T>) => {
    * ストアのデータを更新し、リスナーに通知する
    * @param nextData 更新後のデータ
    */
-  const updateChanges = (nextData: T[]): void => {
+  const updateChanges = (nextData: T): void => {
     data = nextData;
-    revision = (revision + 1) % 1024;
+    revision += 1;
     notifyListeners();
   };
 
