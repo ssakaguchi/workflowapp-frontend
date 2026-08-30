@@ -1,5 +1,6 @@
-import { screen, waitFor } from "@testing-library/react";
+import { renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { act } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -9,7 +10,9 @@ import {
   getApplications,
   getMyApprovalRequests,
 } from "../api/applicationsApi";
+import GlobalSnackbar from "../components/layout/GlobalSnackbar";
 import { ApplicationListPage } from "../pages/ApplicationListPage";
+import { useNotificationStore } from "../stores/notificationStore";
 import type { ApplicationListItem } from "../types/application";
 import { roleStorage } from "../utils/roleStorage";
 import { renderWithQueryClient } from "./renderWithQueryClient";
@@ -40,6 +43,7 @@ function renderComponent() {
   return renderWithQueryClient(
     <MemoryRouter>
       <ApplicationListPage />
+      <GlobalSnackbar />
     </MemoryRouter>,
   );
 }
@@ -48,6 +52,14 @@ describe("ApplicationListPage", () => {
   // 各テスト前にモックの状態をリセットして、テスト間の干渉を防止する
   beforeEach(() => {
     vi.resetAllMocks();
+
+    const { result, unmount } = renderHook(() => useNotificationStore());
+
+    act(() => {
+      result.current.updateChanges(undefined);
+    });
+
+    unmount();
   });
 
   test("初期表示時に読み込み中を表示すること", () => {
@@ -817,5 +829,56 @@ describe("ApplicationListPage", () => {
 
     // onSuccessは実行されないため、一覧は再取得されない
     expect(mockedGetApplications).toHaveBeenCalledTimes(1);
+  });
+
+  test("申請の削除に成功した場合、成功通知を表示すること", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    mockedGetApplications.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          title: "削除対象の申請",
+          applicantDisplayName: "山田太郎",
+          status: "Pending",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+
+    mockedDeleteApplication.mockResolvedValue();
+
+    renderComponent();
+
+    expect(await screen.findByText("削除対象の申請")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "削除",
+      }),
+    );
+
+    expect(
+      screen.getByRole("dialog", {
+        name: "申請を削除しますか？",
+      }),
+    ).toBeInTheDocument();
+
+    // act
+    await user.click(
+      screen.getByRole("button", {
+        name: "削除する",
+      }),
+    );
+
+    // assert
+    expect(mockedDeleteApplication).toHaveBeenCalledWith(1);
+
+    expect(await screen.findByText("申請を削除しました。")).toBeInTheDocument();
   });
 });

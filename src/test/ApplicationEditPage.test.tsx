@@ -4,11 +4,11 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getApplicationById, updateApplication } from "../api/applicationsApi";
+import GlobalSnackbar from "../components/layout/GlobalSnackbar";
 import ApplicationEditPage from "../pages/ApplicationEditPage";
+import { useNotificationStore } from "../stores/notificationStore";
 import type { ApplicationDetail } from "../types/application";
 import { renderWithQueryClient } from "./renderWithQueryClient";
-import GlobalSnackbar from "../components/layout/GlobalSnackbar";
-import { useNotificationStore } from "../stores/notificationStore";
 
 // applicationsApiをモックする
 vi.mock("../api/applicationsApi", () => ({

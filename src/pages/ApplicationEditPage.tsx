@@ -10,6 +10,7 @@ import {
   type ApplicationEditFormValues,
   applicationEditSchema,
 } from "../schemas/applicationEditSchema";
+import { useNotificationStore } from "../stores/notificationStore";
 
 export default function ApplicationEditPage() {
   const { id } = useParams();
@@ -19,6 +20,7 @@ export default function ApplicationEditPage() {
   const isSaving = updateApplicationMutation.isPending;
   const { application, isLoading, errorMessage } = useApplicationDetail(id);
   const initializedApplicationId = useRef<number | null>(null);
+  const { updateChanges } = useNotificationStore();
 
   const {
     register,
@@ -72,6 +74,11 @@ export default function ApplicationEditPage() {
       await updateApplicationMutation.mutateAsync({
         applicationId,
         request: values,
+      });
+
+      updateChanges({
+        message: "申請を更新しました。",
+        severity: "success",
       });
 
       navigate(`/applications/${applicationId}`);
