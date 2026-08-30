@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import PublicRoute from "./components/auth/PublicRoute";
+import GlobalSnackbar from "./components/layout/GlobalSnackbar";
 import Header from "./components/layout/Header";
 import ApplicationCreatePage from "./pages/ApplicationCreatePage";
 import ApplicationDetailPage from "./pages/ApplicationDetailPage";
@@ -84,6 +85,8 @@ function App() {
           }
         />
       </Routes>
+
+      <GlobalSnackbar />
     </BrowserRouter>
   );
 }

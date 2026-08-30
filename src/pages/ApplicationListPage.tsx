@@ -15,6 +15,7 @@ import ApplicationDeleteConfirmDialog from "../components/applications/Applicati
 import { ApplicationListTable } from "../components/applications/ApplicationListTable";
 import ApplicationStatusFilter from "../components/applications/ApplicationStatusFilter";
 import { useApplications } from "../hooks/useApplications";
+import { useNotificationStore } from "../stores/notificationStore";
 import type {
   ApplicationListItem,
   ListView,
@@ -40,6 +41,7 @@ export function ApplicationListPage() {
     deleteApplication,
     isDeleting,
   } = useApplications();
+  const { updateChanges } = useNotificationStore();
 
   const [deleteTargetApplication, setDeleteTargetApplication] =
     useState<ApplicationListItem | null>(null);
@@ -65,6 +67,11 @@ export function ApplicationListPage() {
 
     try {
       await deleteApplication(deleteTargetApplication.id);
+
+      updateChanges({
+        message: "申請を削除しました。",
+        severity: "success",
+      });
     } catch {
       showOperationError("申請の削除に失敗しました。");
     } finally {
