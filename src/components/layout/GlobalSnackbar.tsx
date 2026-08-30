@@ -6,7 +6,7 @@ export default function GlobalSnackbar() {
   const { store, updateChanges } = useNotificationStore();
   const notification = store.data;
 
-  const handlcClose = () => {
+  const handleClose = () => {
     updateChanges(undefined);
   };
 
@@ -14,7 +14,7 @@ export default function GlobalSnackbar() {
     <Snackbar
       open={notification !== undefined}
       autoHideDuration={3000}
-      onClose={handlcClose}
+      onClose={handleClose}
       anchorOrigin={{
         vertical: "bottom",
         horizontal: "center",
@@ -23,7 +23,7 @@ export default function GlobalSnackbar() {
       {notification ? (
         <Alert
           severity={notification.severity}
-          onClose={handlcClose}
+          onClose={handleClose}
           variant="filled"
         >
           {notification.message}
