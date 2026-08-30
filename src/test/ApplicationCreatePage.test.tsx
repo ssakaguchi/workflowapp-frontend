@@ -1,11 +1,13 @@
-import { screen } from "@testing-library/react";
+import { act, renderHook, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { createApplication } from "../api/applicationsApi";
 import { getApprovers } from "../api/usersApi";
+import GlobalSnackbar from "../components/layout/GlobalSnackbar";
 import ApplicationCreatePage from "../pages/ApplicationCreatePage";
+import { useNotificationStore } from "../stores/notificationStore";
 import { renderWithQueryClient } from "./renderWithQueryClient";
 
 // applicationsApiをモックする
@@ -26,6 +28,13 @@ describe("ApplicationCreatePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    const { result, unmount } = renderHook(() => useNotificationStore());
+
+    act(() => {
+      result.current.updateChanges(undefined);
+    });
+
+    unmount();
     mockedGetApprovers.mockResolvedValue([
       {
         userId: 1,
@@ -47,6 +56,7 @@ describe("ApplicationCreatePage", () => {
           <Route path="/applications/new" element={<ApplicationCreatePage />} />
           <Route path="/applications" element={<div>申請一覧</div>} />
         </Routes>
+        <GlobalSnackbar />
       </MemoryRouter>,
     );
   }
@@ -159,6 +169,7 @@ describe("ApplicationCreatePage", () => {
     });
 
     expect(await screen.findByText("申請一覧")).toBeInTheDocument();
+    expect(await screen.findByText("申請を作成しました。")).toBeInTheDocument();
   });
 
   test("申請の作成に失敗した場合、エラーメッセージを表示して作成画面に留まること", async () => {

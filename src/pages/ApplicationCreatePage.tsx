@@ -11,9 +11,11 @@ import {
   type ApplicationCreateFormValues,
   applicationCreateSchema,
 } from "../schemas/applicationCreateSchema";
+import { useNotificationStore } from "../stores/notificationStore";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
+  const { updateChanges } = useNotificationStore();
   const { data: approvers = [], isError: isApproversError } = useApprovers();
   const [errorMessage, setErrorMessage] = useState("");
   const approverFetchError = isApproversError
@@ -40,6 +42,12 @@ export default function ApplicationCreatePage() {
 
     try {
       await createApplicationMutation.mutateAsync(values);
+
+      updateChanges({
+        message: "申請を作成しました。",
+        severity: "success",
+      });
+
       navigate(`/applications`);
     } catch {
       setErrorMessage("申請の作成に失敗しました。");

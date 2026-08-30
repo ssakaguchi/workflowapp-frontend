@@ -1,10 +1,12 @@
-import { screen, waitFor } from "@testing-library/react";
+import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getApplicationById, updateApplication } from "../api/applicationsApi";
+import GlobalSnackbar from "../components/layout/GlobalSnackbar";
 import ApplicationEditPage from "../pages/ApplicationEditPage";
+import { useNotificationStore } from "../stores/notificationStore";
 import type { ApplicationDetail } from "../types/application";
 import { renderWithQueryClient } from "./renderWithQueryClient";
 
@@ -22,6 +24,13 @@ describe("ApplicationEditPage", () => {
   // 各テスト前にモックの状態をリセットして、テスト間の干渉を防止する
   beforeEach(() => {
     vi.clearAllMocks();
+    const { result, unmount } = renderHook(() => useNotificationStore());
+
+    act(() => {
+      result.current.updateChanges(undefined);
+    });
+
+    unmount();
   });
 
   // 各テスト後にモックを完全にリセットして、次のテストに影響を与えないようにする
@@ -39,11 +48,9 @@ describe("ApplicationEditPage", () => {
             element={<ApplicationEditPage />}
           />
           {/* 申請詳細画面への遷移を確認するためのダミールート */}
-          <Route
-            path="/applications/:id"
-            element={<div>申請詳細画面</div>}
-          />{" "}
+          <Route path="/applications/:id" element={<div>申請詳細画面</div>} />
         </Routes>
+        <GlobalSnackbar />
       </MemoryRouter>,
     );
   }
@@ -169,6 +176,7 @@ describe("ApplicationEditPage", () => {
     });
 
     expect(await screen.findByText("申請詳細画面")).toBeInTheDocument();
+    expect(await screen.findByText("申請を更新しました。")).toBeInTheDocument();
   });
 
   test("申請の更新に失敗した場合、エラーメッセージを表示して編集画面に留まること", async () => {
