@@ -6,6 +6,7 @@ import {
   Stack,
   Tab,
   Tabs,
+  TextField,
   Typography,
 } from "@mui/material";
 import { type SyntheticEvent, useState } from "react";
@@ -29,12 +30,14 @@ export function ApplicationListPage() {
     fetchErrorMessage,
     operationErrorMessage,
     selectedStatus,
+    searchTerm,
     totalPages,
     listView,
     page,
     setPage,
     role,
     changeStatus,
+    changeSearchTerm,
     changeListView,
     clearOperationError,
     showOperationError,
@@ -125,6 +128,16 @@ export function ApplicationListPage() {
             <Tab label="管理者用" value="admin" />
           </Tabs>
         )}
+        <Stack sx={{ mt: 2, mb: 2 }}>
+          <TextField
+            label="タイトル・申請者名で検索"
+            type="search"
+            size="small"
+            value={searchTerm}
+            onChange={(event) => changeSearchTerm(event.target.value)}
+            sx={{ width: { xs: "100%", sm: 360 } }}
+          />
+        </Stack>
         {listView === "myApplications" && (
           <Stack
             direction="row"
@@ -161,11 +174,13 @@ export function ApplicationListPage() {
       )}
       {!isLoading && !fetchErrorMessage && applications.length === 0 && (
         <Typography>
-          {listView === "approvalRequests"
-            ? "承認待ちの申請はありません。"
-            : selectedStatus === "All"
-              ? "申請データがありません。"
-              : "該当する申請データがありません。"}
+          {searchTerm.trim()
+            ? "該当する申請データがありません。"
+            : listView === "approvalRequests"
+              ? "承認待ちの申請はありません。"
+              : selectedStatus === "All"
+                ? "申請データがありません。"
+                : "該当する申請データがありません。"}
         </Typography>
       )}
       {/* フィルタリング後のデータがある場合のテーブル表示 */}

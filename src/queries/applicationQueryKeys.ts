@@ -5,10 +5,15 @@ export const applicationQueryKeys = {
 
   lists: () => [...applicationQueryKeys.all, "list"] as const,
 
-  list: (listView: ListView, page: number, selectedStatus: StatusFilter) =>
+  list: (
+    listView: ListView,
+    page: number,
+    selectedStatus: StatusFilter,
+    searchTerm: string,
+  ) =>
     [
       ...applicationQueryKeys.lists(),
-      { listView, page, selectedStatus },
+      { listView, page, selectedStatus, searchTerm },
     ] as const,
 
   details: () => [...applicationQueryKeys.all, "detail"] as const,
