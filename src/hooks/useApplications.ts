@@ -17,14 +17,15 @@ const fetchApplicationList = async (
   listView: ListView,
   page: number,
   selectedStatus: StatusFilter,
+  searchTerm: string,
 ) => {
   switch (listView) {
     case "admin":
-      return getAdminApplications(page, PAGE_SIZE);
+      return getAdminApplications(page, PAGE_SIZE, searchTerm);
     case "approvalRequests":
-      return getMyApprovalRequests(page, PAGE_SIZE);
+      return getMyApprovalRequests(page, PAGE_SIZE, searchTerm);
     case "myApplications":
-      return getApplications(page, PAGE_SIZE, selectedStatus);
+      return getApplications(page, PAGE_SIZE, selectedStatus, searchTerm);
     default: {
       const _exhaustive: never = listView;
       throw new Error(`Unsupported listView: ${_exhaustive}`);
@@ -38,6 +39,7 @@ export function useApplications() {
   const [role] = useState(() => roleStorage.get());
   const [page, setPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("All");
+  const [searchTerm, setSearchTerm] = useState("");
   const [listView, setListView] = useState<ListView>(() =>
     role === "Admin" ? "admin" : "myApplications",
   );
@@ -52,10 +54,22 @@ export function useApplications() {
       });
     },
   });
-  const queryKey = applicationQueryKeys.list(listView, page, selectedStatus);
+  const normalizedSearchTerm = searchTerm.trim();
+  const queryKey = applicationQueryKeys.list(
+    listView,
+    page,
+    selectedStatus,
+    normalizedSearchTerm,
+  );
   const applicationQuery = useQuery({
     queryKey,
-    queryFn: () => fetchApplicationList(listView, page, selectedStatus),
+    queryFn: () =>
+      fetchApplicationList(
+        listView,
+        page,
+        selectedStatus,
+        normalizedSearchTerm,
+      ),
   });
 
   const applications = applicationQuery.data?.items ?? [];
@@ -67,6 +81,11 @@ export function useApplications() {
   // ステータスフィルターの変更時の処理
   const changeStatus = (event: StatusFilter) => {
     setSelectedStatus(event);
+    setPage(1);
+  };
+
+  const changeSearchTerm = (value: string) => {
+    setSearchTerm(value);
     setPage(1);
   };
 
@@ -92,12 +111,14 @@ export function useApplications() {
     fetchErrorMessage,
     operationErrorMessage,
     selectedStatus,
+    searchTerm,
     totalPages,
     listView,
     page,
     setPage,
     role,
     changeStatus,
+    changeSearchTerm,
     changeListView,
     clearOperationError,
     showOperationError,

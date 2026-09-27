@@ -6,6 +6,8 @@ import {
   createApplication,
   deleteApplication,
   getAdminApplications,
+  getApplications,
+  getMyApprovalRequests,
   updateApplication,
 } from "../api/applicationsApi";
 import type { UpdateApplicationRequest } from "../types/application";
@@ -76,6 +78,49 @@ describe("Application API", () => {
       params: {
         page: 1,
         pageSize: 10,
+      },
+    });
+  });
+
+  test("各申請一覧APIは検索語をquery paramsへ含めること", async () => {
+    const getSpy = vi.spyOn(apiClient, "get").mockResolvedValue({
+      data: {
+        items: [],
+        totalCount: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 0,
+      },
+    } as AxiosResponse);
+
+    await getApplications(1, 10, "Pending", "Mika");
+    await getMyApprovalRequests(1, 10, "Mika");
+    await getAdminApplications(1, 10, "Mika");
+
+    expect(getSpy).toHaveBeenNthCalledWith(1, "/applications", {
+      params: {
+        page: 1,
+        pageSize: 10,
+        status: "Pending",
+        searchTerm: "Mika",
+      },
+    });
+    expect(getSpy).toHaveBeenNthCalledWith(
+      2,
+      "/applications/my-approval-requests",
+      {
+        params: {
+          page: 1,
+          pageSize: 10,
+          searchTerm: "Mika",
+        },
+      },
+    );
+    expect(getSpy).toHaveBeenNthCalledWith(3, "/applications/admin", {
+      params: {
+        page: 1,
+        pageSize: 10,
+        searchTerm: "Mika",
       },
     });
   });

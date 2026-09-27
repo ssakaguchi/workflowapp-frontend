@@ -61,6 +61,199 @@ describe("ApplicationListPage", () => {
     unmount();
   });
 
+  test("検索語の入力中に申請一覧を検索しURLは変更しないこと", async () => {
+    const user = userEvent.setup();
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    renderComponent();
+
+    const searchInput = screen.getByRole("searchbox", {
+      name: "タイトル・申請者名で検索",
+    });
+    await user.type(searchInput, "Travel");
+
+    expect(searchInput).toHaveValue("Travel");
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenLastCalledWith(
+        1,
+        10,
+        "All",
+        "Travel",
+      );
+    });
+    expect(window.location.search).toBe("");
+  });
+
+  test("Approverのタブを切り替えても検索語を維持し選択中の一覧だけ検索すること", async () => {
+    const user = userEvent.setup();
+    const emptyResponse = {
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    };
+    mockedRoleStorage.get.mockReturnValue("Approver");
+    mockedGetApplications.mockResolvedValue(emptyResponse);
+    mockedGetMyApprovalRequests.mockResolvedValue(emptyResponse);
+
+    renderComponent();
+
+    const searchInput = screen.getByRole("searchbox", {
+      name: "タイトル・申請者名で検索",
+    });
+    await user.type(searchInput, "Travel");
+
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenLastCalledWith(
+        1,
+        10,
+        "All",
+        "Travel",
+      );
+    });
+
+    await user.click(screen.getByRole("tab", { name: "承認待ち" }));
+
+    await waitFor(() => {
+      expect(mockedGetMyApprovalRequests).toHaveBeenLastCalledWith(
+        1,
+        10,
+        "Travel",
+      );
+    });
+    expect(searchInput).toHaveValue("Travel");
+    expect(window.location.search).toBe("");
+  });
+
+  test("Admin一覧でも入力中の検索語を管理者APIへ渡すこと", async () => {
+    const user = userEvent.setup();
+    mockedRoleStorage.get.mockReturnValue("Admin");
+    mockedGetAdminApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    renderComponent();
+
+    await user.type(
+      screen.getByRole("searchbox", { name: "タイトル・申請者名で検索" }),
+      "Travel",
+    );
+
+    await waitFor(() => {
+      expect(mockedGetAdminApplications).toHaveBeenLastCalledWith(
+        1,
+        10,
+        "Travel",
+      );
+    });
+  });
+
+  test("ステータスと検索語を併用し検索結果0件を該当なしで表示すること", async () => {
+    const user = userEvent.setup();
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    renderComponent();
+
+    await user.click(screen.getByRole("combobox", { name: "ステータス" }));
+    await user.click(screen.getByRole("option", { name: "申請中" }));
+    await user.type(
+      screen.getByRole("searchbox", { name: "タイトル・申請者名で検索" }),
+      "unknown",
+    );
+
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenLastCalledWith(
+        1,
+        10,
+        "Pending",
+        "unknown",
+      );
+    });
+    expect(
+      await screen.findByText("該当する申請データがありません。"),
+    ).toBeInTheDocument();
+  });
+
+  test("ステータス未指定で検索結果が0件の場合は該当なしを表示すること", async () => {
+    const user = userEvent.setup();
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    renderComponent();
+    await user.type(
+      screen.getByRole("searchbox", { name: "タイトル・申請者名で検索" }),
+      "unknown",
+    );
+
+    expect(
+      await screen.findByText("該当する申請データがありません。"),
+    ).toBeInTheDocument();
+  });
+
+  test("ページ2から検索するとページ1へ戻り、検索を消すと未検索条件へ戻ること", async () => {
+    const user = userEvent.setup();
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 21,
+      page: 1,
+      pageSize: 10,
+      totalPages: 3,
+    });
+
+    renderComponent();
+
+    await user.click(
+      await screen.findByRole("button", { name: /go to page 2/i }),
+    );
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenLastCalledWith(2, 10, "All", "");
+    });
+
+    const searchInput = screen.getByRole("searchbox", {
+      name: "タイトル・申請者名で検索",
+    });
+    await user.type(searchInput, "Travel");
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenLastCalledWith(
+        1,
+        10,
+        "All",
+        "Travel",
+      );
+    });
+
+    await user.clear(searchInput);
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "All", "");
+    });
+  });
+
   test("初期表示時に読み込み中を表示すること", () => {
     mockedGetApplications.mockReturnValue(new Promise(() => {}));
     mockedGetMyApprovalRequests.mockReturnValue(new Promise(() => {}));
@@ -313,7 +506,12 @@ describe("ApplicationListPage", () => {
 
     expect(screen.queryByText("承認済みの申請")).not.toBeInTheDocument();
 
-    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "Pending");
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(
+      1,
+      10,
+      "Pending",
+      "",
+    );
   });
 
   test("ステータス絞り込み結果が0件の場合に該当する申請データがありませんを表示すること", async () => {
@@ -353,7 +551,12 @@ describe("ApplicationListPage", () => {
       await screen.findByText("該当する申請データがありません。"),
     ).toBeInTheDocument();
 
-    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "Approved");
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(
+      1,
+      10,
+      "Approved",
+      "",
+    );
   });
 
   test("すべてのステータスを選択した場合に全件が表示されること", async () => {
@@ -472,7 +675,7 @@ describe("ApplicationListPage", () => {
 
     // 初期表示では「自分の申請」なので getApplications が呼ばれる
     await waitFor(() => {
-      expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All");
+      expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All", "");
     });
 
     // Act
@@ -481,7 +684,7 @@ describe("ApplicationListPage", () => {
     // Assert - getMyApprovalRequests が呼ばれ、承認待ちの申請が表示されることを確認する
     expect(await screen.findByText("承認待ちの申請")).toBeInTheDocument();
 
-    expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10);
+    expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10, "");
     expect(
       screen.queryByRole("link", { name: "新規作成" }),
     ).not.toBeInTheDocument();
@@ -534,7 +737,7 @@ describe("ApplicationListPage", () => {
       await screen.findByText("申請一覧の取得に失敗しました。"),
     ).toBeInTheDocument();
 
-    expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10);
+    expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10, "");
 
     // 古い申請データが表示されないことを確認する
     expect(screen.queryByText("古い申請データ")).not.toBeInTheDocument();
@@ -692,7 +895,7 @@ describe("ApplicationListPage", () => {
     // 1ページ目の取得と表示を確認
     expect(await screen.findByText("1ページ目の申請")).toBeInTheDocument();
 
-    expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All");
+    expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All", "");
 
     // MUI Paginationの「2ページ目」ボタンを押す
     await user.click(
@@ -704,7 +907,7 @@ describe("ApplicationListPage", () => {
     // 2ページ目の取得と表示を確認
     expect(await screen.findByText("2ページ目の申請")).toBeInTheDocument();
 
-    expect(mockedGetApplications).toHaveBeenLastCalledWith(2, 10, "All");
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(2, 10, "All", "");
 
     // 1ページ目のデータが残っていないことを確認
     expect(screen.queryByText("1ページ目の申請")).not.toBeInTheDocument();
@@ -782,7 +985,7 @@ describe("ApplicationListPage", () => {
       expect(mockedGetApplications).toHaveBeenCalledTimes(2);
     });
 
-    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "All");
+    expect(mockedGetApplications).toHaveBeenLastCalledWith(1, 10, "All", "");
   });
 
   test("申請の削除に失敗した場合、エラーメッセージを表示して一覧に申請を残すこと", async () => {

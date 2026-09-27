@@ -13,6 +13,7 @@ export const getApplications = async (
   page: number,
   pageSize: number,
   status?: StatusFilter,
+  searchTerm?: string,
 ): Promise<PagedResponse<ApplicationListItem>> => {
   const response = await apiClient.get<PagedResponse<ApplicationListItem>>(
     "/applications",
@@ -21,6 +22,7 @@ export const getApplications = async (
         page,
         pageSize,
         status: status && status !== "All" ? status : undefined,
+        searchTerm: searchTerm?.trim() || undefined,
       },
     },
   );
@@ -32,6 +34,7 @@ export const getApplications = async (
 export const getMyApprovalRequests = async (
   page: number,
   pageSize: number,
+  searchTerm?: string,
 ): Promise<PagedResponse<ApplicationListItem>> => {
   const response = await apiClient.get<PagedResponse<ApplicationListItem>>(
     "/applications/my-approval-requests",
@@ -39,6 +42,7 @@ export const getMyApprovalRequests = async (
       params: {
         page,
         pageSize,
+        searchTerm: searchTerm?.trim() || undefined,
       },
     },
   );
@@ -50,6 +54,7 @@ export const getMyApprovalRequests = async (
 export const getAdminApplications = async (
   page: number,
   pageSize: number,
+  searchTerm?: string,
 ): Promise<PagedResponse<ApplicationListItem>> => {
   const response = await apiClient.get<PagedResponse<ApplicationListItem>>(
     "/applications/admin",
@@ -57,6 +62,7 @@ export const getAdminApplications = async (
       params: {
         page,
         pageSize,
+        searchTerm: searchTerm?.trim() || undefined,
       },
     },
   );
