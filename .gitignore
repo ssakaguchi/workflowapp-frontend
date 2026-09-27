@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+#skills
+.agents
+tasks
+specs
+skills-lock.json
