@@ -52,6 +52,8 @@ describe("ApplicationListPage", () => {
   beforeEach(() => {
     vi.resetAllMocks();
 
+    localStorage.removeItem("applicationStatusFilter");
+
     const { result, unmount } = renderHook(() => useNotificationStore());
 
     act(() => {
@@ -1082,5 +1084,84 @@ describe("ApplicationListPage", () => {
     expect(mockedDeleteApplication).toHaveBeenCalledWith(1);
 
     expect(await screen.findByText("申請を削除しました。")).toBeInTheDocument();
+  });
+
+  test("ステータスを変更すると選択したステータスをlocalStorageに保存すること", async () => {
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(
+      screen.getByRole("combobox", {
+        name: "ステータス",
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("option", {
+        name: "申請中",
+      }),
+    );
+
+    expect(localStorage.getItem("applicationStatusFilter")).toBe("Pending");
+  });
+
+  test("localStorageに保存されたステータスを初期表示時に復元すること", async () => {
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    localStorage.setItem("applicationStatusFilter", "Approved");
+
+    renderComponent();
+
+    expect(
+      screen.getByRole("combobox", {
+        name: "ステータス",
+      }),
+    ).toHaveTextContent("承認済み");
+
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "Approved", "");
+    });
+  });
+
+  test("localStorageに不正なステータスが保存されている場合はAllを使用すること", async () => {
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    localStorage.setItem("applicationStatusFilter", "Unknown");
+
+    renderComponent();
+
+    expect(
+      screen.getByRole("combobox", {
+        name: "ステータス",
+      }),
+    ).toHaveTextContent("すべて");
+
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All", "");
+    });
   });
 });

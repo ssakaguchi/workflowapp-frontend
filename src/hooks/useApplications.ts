@@ -10,6 +10,7 @@ import {
 import { applicationQueryKeys } from "../queries/applicationQueryKeys";
 import type { ListView, StatusFilter } from "../types/application";
 import { roleStorage } from "../utils/roleStorage";
+import { applicationStatusFilterStorage } from "../utils/applicationStatusFilterStorage";
 
 const PAGE_SIZE = 10;
 
@@ -38,7 +39,9 @@ export function useApplications() {
   const [operationErrorMessage, setOperationErrorMessage] = useState("");
   const [role] = useState(() => roleStorage.get());
   const [page, setPage] = useState(1);
-  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("All");
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>(() =>
+    applicationStatusFilterStorage.get(),
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [listView, setListView] = useState<ListView>(() =>
     role === "Admin" ? "admin" : "myApplications",
@@ -80,6 +83,8 @@ export function useApplications() {
 
   // ステータスフィルターの変更時の処理
   const changeStatus = (event: StatusFilter) => {
+    applicationStatusFilterStorage.set(event);
+
     setSelectedStatus(event);
     setPage(1);
   };
