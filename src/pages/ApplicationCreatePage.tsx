@@ -51,6 +51,9 @@ export default function ApplicationCreatePage() {
     name: "approverUserId",
   });
 
+  const hasDraft =
+    Boolean(title) || Boolean(content) || approverUserId !== undefined;
+
   useEffect(() => {
     const isEmptyDraft = !title && !content && approverUserId === undefined;
 
@@ -119,14 +122,16 @@ export default function ApplicationCreatePage() {
         >
           一覧へ戻る
         </Button>
-        <Button
-          type="button"
-          variant="outlined"
-          onClick={handleDiscardDraft}
-          disabled={createApplicationMutation.isPending}
-        >
-          下書きを破棄
-        </Button>
+        {hasDraft && (
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={handleDiscardDraft}
+            disabled={createApplicationMutation.isPending}
+          >
+            下書きを破棄
+          </Button>
+        )}
       </Stack>
 
       <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>

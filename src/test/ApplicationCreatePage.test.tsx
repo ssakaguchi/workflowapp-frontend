@@ -547,4 +547,62 @@ describe("ApplicationCreatePage", () => {
     expect(screen.getByLabelText("タイトル")).toHaveValue("");
     expect(screen.getByLabelText("内容")).toHaveValue("");
   });
+
+  test("下書きがない場合は下書きを破棄ボタンを表示しないこと", async () => {
+    renderComponent();
+
+    await screen.findByText("申請作成画面");
+
+    expect(
+      screen.queryByRole("button", {
+        name: "下書きを破棄",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("下書きがある場合は下書きを破棄ボタンを表示すること", async () => {
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+        approverUserId: 1,
+      }),
+    );
+
+    renderComponent();
+
+    expect(
+      await screen.findByRole("button", {
+        name: "下書きを破棄",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  test("下書きを破棄すると下書きを破棄ボタンが非表示になること", async () => {
+    const user = userEvent.setup();
+
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+        approverUserId: 1,
+      }),
+    );
+
+    renderComponent();
+
+    const discardButton = await screen.findByRole("button", {
+      name: "下書きを破棄",
+    });
+
+    await user.click(discardButton);
+
+    expect(
+      screen.queryByRole("button", {
+        name: "下書きを破棄",
+      }),
+    ).not.toBeInTheDocument();
+  });
 });
