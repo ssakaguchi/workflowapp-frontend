@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { Controller, useForm, type DefaultValues } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import ApproverSelectBox from "../components/users/ApproverSelectBox";
@@ -12,6 +12,7 @@ import {
   applicationCreateSchema,
 } from "../schemas/applicationCreateSchema";
 import { useNotificationStore } from "../stores/notificationStore";
+import { applicationDraftStorage } from "../utils/applicationDraftStorage";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
@@ -22,26 +23,38 @@ export default function ApplicationCreatePage() {
     ? "承認者一覧の取得に失敗しました。"
     : "";
   const createApplicationMutation = useCreateApplication();
+  const defaultValues = applicationDraftStorage.get();
 
   const {
     register,
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ApplicationCreateFormValues>({
     resolver: zodResolver(applicationCreateSchema),
-    defaultValues: {
-      title: "",
-      content: "",
-      approverUserId: undefined,
-    },
+    defaultValues,
   });
+
+  const title = watch("title");
+  const content = watch("content");
+  const approverUserId = watch("approverUserId");
+
+  useEffect(() => {
+    applicationDraftStorage.set({
+      title,
+      content,
+      approverUserId,
+    });
+  }, [title, content, approverUserId]);
 
   const onSubmit = async (values: ApplicationCreateFormValues) => {
     setErrorMessage("");
 
     try {
       await createApplicationMutation.mutateAsync(values);
+
+      applicationDraftStorage.remove();
 
       updateChanges({
         message: "申請を作成しました。",

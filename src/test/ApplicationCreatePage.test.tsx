@@ -28,6 +28,8 @@ describe("ApplicationCreatePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    localStorage.removeItem("applicationDraft");
+
     const { result, unmount } = renderHook(() => useNotificationStore());
 
     act(() => {
@@ -341,5 +343,180 @@ describe("ApplicationCreatePage", () => {
       content: "新規申請内容",
       approverUserId: 1,
     });
+  });
+
+  test("タイトルを入力すると下書きをlocalStorageに保存すること", async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    const titleInput = await screen.findByLabelText("タイトル");
+
+    await user.type(titleInput, "出張申請");
+
+    expect(localStorage.getItem("applicationDraft")).toBe(
+      JSON.stringify({
+        title: "出張申請",
+        content: "",
+      }),
+    );
+  });
+
+  test("タイトルと内容を入力すると下書きをlocalStorageに保存すること", async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.type(await screen.findByLabelText("タイトル"), "出張申請");
+
+    await user.type(
+      screen.getByLabelText("内容"),
+      "東京への出張を申請します。",
+    );
+
+    expect(localStorage.getItem("applicationDraft")).toBe(
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+      }),
+    );
+  });
+
+  test("localStorageに保存された下書きを初期表示時に復元すること", async () => {
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+      }),
+    );
+
+    renderComponent();
+
+    expect(await screen.findByLabelText("タイトル")).toHaveValue("出張申請");
+    expect(screen.getByLabelText("内容")).toHaveValue(
+      "東京への出張を申請します。",
+    );
+  });
+
+  test("localStorageの下書きが不正なJSONの場合は空のフォームを表示すること", async () => {
+    localStorage.setItem("applicationDraft", "{ invalid json");
+
+    renderComponent();
+
+    expect(await screen.findByLabelText("タイトル")).toHaveValue("");
+    expect(screen.getByLabelText("内容")).toHaveValue("");
+  });
+
+  test("申請の作成に成功した場合は下書きをlocalStorageから削除すること", async () => {
+    const user = userEvent.setup();
+
+    mockedCreateApplication.mockResolvedValue(undefined);
+
+    renderComponent();
+
+    await user.type(await screen.findByLabelText("タイトル"), "出張申請");
+
+    await user.type(
+      screen.getByLabelText("内容"),
+      "東京への出張を申請します。",
+    );
+
+    await user.click(screen.getByLabelText("承認者 *"));
+    await user.click(
+      screen.getByRole("option", {
+        name: "承認者ユーザー",
+      }),
+    );
+
+    // 下書きが保存されていることを事前に確認
+    expect(localStorage.getItem("applicationDraft")).not.toBeNull();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "申請",
+      }),
+    );
+
+    expect(await screen.findByText("申請一覧")).toBeInTheDocument();
+
+    expect(localStorage.getItem("applicationDraft")).toBeNull();
+  });
+
+  test("申請の作成に失敗した場合は下書きをlocalStorageに残すこと", async () => {
+    const user = userEvent.setup();
+
+    mockedCreateApplication.mockRejectedValue(new Error("作成に失敗しました"));
+
+    renderComponent();
+
+    await user.type(await screen.findByLabelText("タイトル"), "出張申請");
+
+    await user.type(
+      screen.getByLabelText("内容"),
+      "東京への出張を申請します。",
+    );
+
+    await user.click(screen.getByLabelText("承認者 *"));
+    await user.click(
+      screen.getByRole("option", {
+        name: "承認者ユーザー",
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "申請",
+      }),
+    );
+
+    expect(
+      await screen.findByText("申請の作成に失敗しました。"),
+    ).toBeInTheDocument();
+
+    expect(localStorage.getItem("applicationDraft")).not.toBeNull();
+  });
+
+  test("承認者を選択すると下書きに承認者IDを保存すること", async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(await screen.findByLabelText("承認者 *"));
+    await user.click(
+      screen.getByRole("option", {
+        name: "承認者ユーザー",
+      }),
+    );
+
+    expect(localStorage.getItem("applicationDraft")).toBe(
+      JSON.stringify({
+        title: "",
+        content: "",
+        approverUserId: 1,
+      }),
+    );
+  });
+
+  test("localStorageに保存された承認者を初期表示時に復元すること", async () => {
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+        approverUserId: 1,
+      }),
+    );
+
+    renderComponent();
+
+    expect(await screen.findByLabelText("タイトル")).toHaveValue("出張申請");
+    expect(screen.getByLabelText("内容")).toHaveValue(
+      "東京への出張を申請します。",
+    );
+
+    expect(await screen.findByLabelText("承認者 *")).toHaveTextContent(
+      "承認者ユーザー",
+    );
   });
 });
