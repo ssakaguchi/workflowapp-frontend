@@ -1,4 +1,10 @@
-import { act, renderHook, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -47,6 +53,7 @@ describe("ApplicationCreatePage", () => {
 
   // 各テスト後にモックを完全にリセットして、次のテストに影響を与えないようにする
   afterEach(() => {
+    vi.useRealTimers();
     vi.resetAllMocks();
   });
 
@@ -354,12 +361,14 @@ describe("ApplicationCreatePage", () => {
 
     await user.type(titleInput, "出張申請");
 
-    expect(localStorage.getItem("applicationDraft")).toBe(
-      JSON.stringify({
-        title: "出張申請",
-        content: "",
-      }),
-    );
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "出張申請",
+          content: "",
+        }),
+      );
+    });
   });
 
   test("タイトルと内容を入力すると下書きをlocalStorageに保存すること", async () => {
@@ -374,12 +383,14 @@ describe("ApplicationCreatePage", () => {
       "東京への出張を申請します。",
     );
 
-    expect(localStorage.getItem("applicationDraft")).toBe(
-      JSON.stringify({
-        title: "出張申請",
-        content: "東京への出張を申請します。",
-      }),
-    );
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "出張申請",
+          content: "東京への出張を申請します。",
+        }),
+      );
+    });
   });
 
   test("localStorageに保存された下書きを初期表示時に復元すること", async () => {
@@ -430,7 +441,9 @@ describe("ApplicationCreatePage", () => {
     );
 
     // 下書きが保存されていることを事前に確認
-    expect(localStorage.getItem("applicationDraft")).not.toBeNull();
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).not.toBeNull();
+    });
 
     await user.click(
       screen.getByRole("button", {
@@ -474,7 +487,9 @@ describe("ApplicationCreatePage", () => {
       await screen.findByText("申請の作成に失敗しました。"),
     ).toBeInTheDocument();
 
-    expect(localStorage.getItem("applicationDraft")).not.toBeNull();
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).not.toBeNull();
+    });
   });
 
   test("承認者を選択すると下書きに承認者IDを保存すること", async () => {
@@ -489,13 +504,15 @@ describe("ApplicationCreatePage", () => {
       }),
     );
 
-    expect(localStorage.getItem("applicationDraft")).toBe(
-      JSON.stringify({
-        title: "",
-        content: "",
-        approverUserId: 1,
-      }),
-    );
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "",
+          content: "",
+          approverUserId: 1,
+        }),
+      );
+    });
   });
 
   test("localStorageに保存された承認者を初期表示時に復元すること", async () => {
@@ -604,5 +621,98 @@ describe("ApplicationCreatePage", () => {
         name: "下書きを破棄",
       }),
     ).not.toBeInTheDocument();
+  });
+
+  test("入力直後には下書きを保存せず一定時間後に保存すること", async () => {
+    vi.useFakeTimers();
+
+    try {
+      renderComponent();
+
+      const titleInput = screen.getByLabelText("タイトル");
+
+      fireEvent.change(titleInput, {
+        target: {
+          value: "出張申請",
+        },
+      });
+
+      // 入力直後には保存されない
+      expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+      // 499msではまだ保存されない
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(499);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+      // さらに1ms経過すると保存される
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "出張申請",
+          content: "",
+        }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("入力が続いた場合は最後の入力から500ms後に下書きを保存すること", async () => {
+    vi.useFakeTimers();
+
+    try {
+      renderComponent();
+
+      const titleInput = screen.getByLabelText("タイトル");
+
+      // 最初の入力
+      fireEvent.change(titleInput, {
+        target: {
+          value: "出張",
+        },
+      });
+
+      // 400ms進める
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+      // 500ms経過する前にさらに入力
+      fireEvent.change(titleInput, {
+        target: {
+          value: "出張申請",
+        },
+      });
+
+      // 最初の入力からは500msを超えるが、
+      // 最後の入力からはまだ100msしか経っていない
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+      // 最後の入力から合計500msにする
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "出張申請",
+          content: "",
+        }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

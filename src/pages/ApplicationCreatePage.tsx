@@ -62,11 +62,18 @@ export default function ApplicationCreatePage() {
       return;
     }
 
-    applicationDraftStorage.set({
-      title,
-      content,
-      approverUserId,
-    });
+    // 下書きを自動保存するためのタイマーを設定
+    const timeoutId = setTimeout(() => {
+      applicationDraftStorage.set({
+        title,
+        content,
+        approverUserId,
+      });
+    }, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [title, content, approverUserId]);
 
   const onSubmit = async (values: ApplicationCreateFormValues) => {
