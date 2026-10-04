@@ -9,8 +9,8 @@ import {
 } from "../api/applicationsApi";
 import { applicationQueryKeys } from "../queries/applicationQueryKeys";
 import type { ListView, StatusFilter } from "../types/application";
-import { roleStorage } from "../utils/roleStorage";
 import { applicationStatusFilterStorage } from "../utils/applicationStatusFilterStorage";
+import { roleStorage } from "../utils/roleStorage";
 
 const PAGE_SIZE = 10;
 

@@ -1,5 +1,7 @@
 import type { DefaultValues } from "react-hook-form";
+
 import type { ApplicationCreateFormValues } from "../schemas/applicationCreateSchema";
+import { applicationDraftSchema } from "../schemas/applicationDraftSchema";
 
 const APPLICATION_DRAFT_KEY = "applicationDraft";
 
@@ -18,7 +20,14 @@ export const applicationDraftStorage = {
     }
 
     try {
-      return JSON.parse(savedDraft);
+      const parsedDraft = JSON.parse(savedDraft);
+      const result = applicationDraftSchema.safeParse(parsedDraft);
+
+      if (!result.success) {
+        return emptyDefaultValues;
+      }
+
+      return result.data;
     } catch {
       return emptyDefaultValues;
     }

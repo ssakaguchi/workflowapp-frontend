@@ -47,4 +47,21 @@ describe("applicationDraftStorage", () => {
 
     expect(localStorage.getItem("applicationDraft")).toBeNull();
   });
+
+  test("JSONとして正しくても下書きの型が不正な場合は空の初期値を返すこと", () => {
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: 123,
+        content: true,
+        approverUserId: "abc",
+      }),
+    );
+
+    expect(applicationDraftStorage.get()).toEqual({
+      title: "",
+      content: "",
+      approverUserId: undefined,
+    });
+  });
 });

@@ -519,4 +519,32 @@ describe("ApplicationCreatePage", () => {
       "承認者ユーザー",
     );
   });
+
+  test("下書きを破棄するとlocalStorageを削除してフォームを空にすること", async () => {
+    const user = userEvent.setup();
+
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+        approverUserId: 1,
+      }),
+    );
+
+    renderComponent();
+
+    expect(await screen.findByLabelText("タイトル")).toHaveValue("出張申請");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "下書きを破棄",
+      }),
+    );
+
+    expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+    expect(screen.getByLabelText("タイトル")).toHaveValue("");
+    expect(screen.getByLabelText("内容")).toHaveValue("");
+  });
 });

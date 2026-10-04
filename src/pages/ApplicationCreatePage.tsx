@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Controller, useForm, type DefaultValues } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import ApproverSelectBox from "../components/users/ApproverSelectBox";
@@ -29,18 +29,36 @@ export default function ApplicationCreatePage() {
     register,
     control,
     handleSubmit,
-    watch,
+    reset,
     formState: { errors },
   } = useForm<ApplicationCreateFormValues>({
     resolver: zodResolver(applicationCreateSchema),
     defaultValues,
   });
 
-  const title = watch("title");
-  const content = watch("content");
-  const approverUserId = watch("approverUserId");
+  const title = useWatch({
+    control,
+    name: "title",
+  });
+
+  const content = useWatch({
+    control,
+    name: "content",
+  });
+
+  const approverUserId = useWatch({
+    control,
+    name: "approverUserId",
+  });
 
   useEffect(() => {
+    const isEmptyDraft = !title && !content && approverUserId === undefined;
+
+    if (isEmptyDraft) {
+      applicationDraftStorage.remove();
+      return;
+    }
+
     applicationDraftStorage.set({
       title,
       content,
@@ -71,6 +89,16 @@ export default function ApplicationCreatePage() {
     setErrorMessage("");
   };
 
+  const handleDiscardDraft = () => {
+    applicationDraftStorage.remove();
+
+    reset({
+      title: "",
+      content: "",
+      approverUserId: undefined,
+    });
+  };
+
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
       <Typography variant="h5" component="h1" gutterBottom>
@@ -90,6 +118,14 @@ export default function ApplicationCreatePage() {
           disabled={createApplicationMutation.isPending}
         >
           一覧へ戻る
+        </Button>
+        <Button
+          type="button"
+          variant="outlined"
+          onClick={handleDiscardDraft}
+          disabled={createApplicationMutation.isPending}
+        >
+          下書きを破棄
         </Button>
       </Stack>
 
