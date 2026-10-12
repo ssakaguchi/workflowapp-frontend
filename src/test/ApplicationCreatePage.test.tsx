@@ -715,4 +715,56 @@ describe("ApplicationCreatePage", () => {
       vi.useRealTimers();
     }
   });
+
+  test("入力後500ms以内に画面を離れても最新の下書きを保存すること", () => {
+    const { unmount } = renderComponent();
+
+    fireEvent.change(screen.getByLabelText("タイトル"), {
+      target: { value: "出張申請" },
+    });
+
+    // debounceによる保存はまだ実行されていない
+    expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+    // 500ms経過前にアンマウント
+    unmount();
+
+    expect(localStorage.getItem("applicationDraft")).toBe(
+      JSON.stringify({
+        title: "出張申請",
+        content: "",
+      }),
+    );
+  });
+
+  test("下書きを破棄したあと再入力すると画面離脱時に新しい下書きを保存すること", () => {
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "古い下書き",
+        content: "",
+      }),
+    );
+
+    const { unmount } = renderComponent();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "下書きを破棄",
+      }),
+    );
+
+    fireEvent.change(screen.getByLabelText("タイトル"), {
+      target: { value: "新しい下書き" },
+    });
+
+    unmount();
+
+    expect(localStorage.getItem("applicationDraft")).toBe(
+      JSON.stringify({
+        title: "新しい下書き",
+        content: "",
+      }),
+    );
+  });
 });

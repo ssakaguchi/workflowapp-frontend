@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
@@ -51,6 +51,20 @@ export default function ApplicationCreatePage() {
     name: "approverUserId",
   });
 
+  const latestDraftRef = useRef({
+    title,
+    content,
+    approverUserId,
+  });
+
+  latestDraftRef.current = {
+    title,
+    content,
+    approverUserId,
+  };
+
+  const shouldSaveDraftOnUnmountRef = useRef(true);
+
   const hasDraft =
     Boolean(title) || Boolean(content) || approverUserId !== undefined;
 
@@ -61,6 +75,8 @@ export default function ApplicationCreatePage() {
       applicationDraftStorage.remove();
       return;
     }
+
+    shouldSaveDraftOnUnmountRef.current = true;
 
     // 下書きを自動保存するためのタイマーを設定
     const timeoutId = setTimeout(() => {
@@ -76,19 +92,41 @@ export default function ApplicationCreatePage() {
     };
   }, [title, content, approverUserId]);
 
+  useEffect(() => {
+    return () => {
+      if (!shouldSaveDraftOnUnmountRef.current) {
+        return;
+      }
+
+      const { title, content, approverUserId } = latestDraftRef.current;
+
+      const isEmptyDraft = !title && !content && approverUserId === undefined;
+
+      if (isEmptyDraft) {
+        return;
+      }
+
+      applicationDraftStorage.set({
+        title,
+        content,
+        approverUserId,
+      });
+    };
+  }, []);
+
   const onSubmit = async (values: ApplicationCreateFormValues) => {
     setErrorMessage("");
 
     try {
       await createApplicationMutation.mutateAsync(values);
 
+      shouldSaveDraftOnUnmountRef.current = false;
       applicationDraftStorage.remove();
 
       updateChanges({
         message: "申請を作成しました。",
         severity: "success",
       });
-
       navigate(`/applications`);
     } catch {
       setErrorMessage("申請の作成に失敗しました。");
@@ -100,6 +138,8 @@ export default function ApplicationCreatePage() {
   };
 
   const handleDiscardDraft = () => {
+    shouldSaveDraftOnUnmountRef.current = false;
+
     applicationDraftStorage.remove();
 
     reset({
