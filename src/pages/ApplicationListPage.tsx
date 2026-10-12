@@ -128,7 +128,19 @@ export function ApplicationListPage() {
             <Tab label="管理者用" value="admin" />
           </Tabs>
         )}
-        <Stack sx={{ mt: 2, mb: 2 }}>
+        <Stack
+          direction="row"
+          spacing="10px"
+          alignItems="flex-start"
+          sx={{ mt: 2, mb: 4 }}
+        >
+          {listView === "myApplications" && (
+            <ApplicationStatusFilter
+              selectedStatus={selectedStatus}
+              handleStatusChange={handleStatusChange}
+            />
+          )}
+
           <TextField
             label="タイトル・申請者名で検索"
             type="search"
@@ -137,20 +149,10 @@ export function ApplicationListPage() {
             onChange={(event) => changeSearchTerm(event.target.value)}
             sx={{ width: { xs: "100%", sm: 360 } }}
           />
-        </Stack>
-        {listView === "myApplications" && (
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="flex-start"
-            sx={{ mt: 2, mb: 4 }}
-          >
-            {/* ステータスフィルタのセレクトボックス */}
-            <ApplicationStatusFilter
-              selectedStatus={selectedStatus}
-              handleStatusChange={handleStatusChange}
-            />
 
+          <Box flexGrow="1" />
+
+          {listView === "myApplications" && (
             <Button
               variant="contained"
               component={RouterLink}
@@ -158,8 +160,8 @@ export function ApplicationListPage() {
             >
               新規作成
             </Button>
-          </Stack>
-        )}
+          )}
+        </Stack>
       </Box>
       {isLoading && <Typography>読み込み中...</Typography>}
       {!isLoading && fetchErrorMessage && (

@@ -9,6 +9,8 @@ import {
 } from "../api/applicationsApi";
 import { applicationQueryKeys } from "../queries/applicationQueryKeys";
 import type { ListView, StatusFilter } from "../types/application";
+import { applicationListViewStorage } from "../utils/applicationListViewStorage";
+import { applicationSearchTermStorage } from "../utils/applicationSearchTermStorage";
 import { applicationStatusFilterStorage } from "../utils/applicationStatusFilterStorage";
 import { roleStorage } from "../utils/roleStorage";
 
@@ -42,10 +44,22 @@ export function useApplications() {
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>(() =>
     applicationStatusFilterStorage.get(),
   );
-  const [searchTerm, setSearchTerm] = useState("");
-  const [listView, setListView] = useState<ListView>(() =>
-    role === "Admin" ? "admin" : "myApplications",
+  const [searchTerm, setSearchTerm] = useState(() =>
+    applicationSearchTermStorage.get(),
   );
+  const [listView, setListView] = useState<ListView>(() => {
+    if (role === "Admin") {
+      return "admin";
+    }
+
+    const savedListView = applicationListViewStorage.get();
+
+    if (role === "Approver" && savedListView === "approvalRequests") {
+      return "approvalRequests";
+    }
+
+    return "myApplications";
+  });
 
   // 申請一覧の取得処理
   const queryClient = useQueryClient();
@@ -90,12 +104,16 @@ export function useApplications() {
   };
 
   const changeSearchTerm = (value: string) => {
+    applicationSearchTermStorage.set(value);
+
     setSearchTerm(value);
     setPage(1);
   };
 
   // リストビューの変更時の処理
   const changeListView = (value: ListView) => {
+    applicationListViewStorage.set(value);
+
     setListView(value);
     setPage(1);
     setSelectedStatus("All");

@@ -53,6 +53,8 @@ describe("ApplicationListPage", () => {
     vi.resetAllMocks();
 
     localStorage.removeItem("applicationStatusFilter");
+    localStorage.removeItem("applicationSearchTerm");
+    localStorage.removeItem("applicationListView");
 
     const { result, unmount } = renderHook(() => useNotificationStore());
 
@@ -1163,5 +1165,203 @@ describe("ApplicationListPage", () => {
     await waitFor(() => {
       expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All", "");
     });
+  });
+
+  test("検索語を入力するとlocalStorageに保存すること", async () => {
+    const user = userEvent.setup();
+
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    renderComponent();
+
+    await user.type(
+      screen.getByRole("searchbox", {
+        name: "タイトル・申請者名で検索",
+      }),
+      "Travel",
+    );
+
+    expect(localStorage.getItem("applicationSearchTerm")).toBe("Travel");
+  });
+
+  test("localStorageに保存された検索語を初期表示時に復元すること", async () => {
+    // arrange - localStorageに検索語を設定しておく
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [], // 検索結果のアイテム一覧
+      totalCount: 0, // 検索結果の総件数
+      page: 1, // 現在のページ番号
+      pageSize: 10, // 1ページあたりの件数
+      totalPages: 0, // 総ページ数
+    });
+
+    localStorage.setItem("applicationSearchTerm", "Travel");
+
+    // act - コンポーネントをレンダリングする
+    renderComponent();
+
+    // assert - 検索語が復元されていること
+    expect(
+      screen.getByRole("searchbox", {
+        name: "タイトル・申請者名で検索",
+      }),
+    ).toHaveValue("Travel");
+
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledWith(
+        1, // page
+        10, // pageSize
+        "All", // status
+        "Travel", // searchTerm
+      );
+    });
+  });
+
+  test("Approverがタブを切り替えると選択した一覧をlocalStorageに保存すること", async () => {
+    const user = userEvent.setup();
+
+    mockedRoleStorage.get.mockReturnValue("Approver");
+
+    const emptyResponse = {
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    };
+
+    mockedGetApplications.mockResolvedValue(emptyResponse);
+    mockedGetMyApprovalRequests.mockResolvedValue(emptyResponse);
+
+    renderComponent();
+
+    await user.click(
+      screen.getByRole("tab", {
+        name: "承認待ち",
+      }),
+    );
+
+    expect(localStorage.getItem("applicationListView")).toBe(
+      "approvalRequests",
+    );
+  });
+
+  test("ApproverはlocalStorageに保存された一覧タブを初期表示時に復元すること", async () => {
+    mockedRoleStorage.get.mockReturnValue("Approver");
+
+    const emptyResponse = {
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    };
+
+    mockedGetApplications.mockResolvedValue(emptyResponse);
+    mockedGetMyApprovalRequests.mockResolvedValue(emptyResponse);
+
+    localStorage.setItem("applicationListView", "approvalRequests");
+
+    renderComponent();
+
+    expect(
+      screen.getByRole("tab", {
+        name: "承認待ち",
+      }),
+    ).toHaveAttribute("aria-selected", "true");
+
+    await waitFor(() => {
+      expect(mockedGetMyApprovalRequests).toHaveBeenCalledWith(1, 10, "");
+    });
+  });
+
+  test("ApplicantはlocalStorageに承認待ちタブが保存されていても自分の申請を表示すること", async () => {
+    mockedRoleStorage.get.mockReturnValue("Applicant");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    localStorage.setItem("applicationListView", "approvalRequests");
+
+    renderComponent();
+
+    expect(
+      screen.getByRole("tab", {
+        name: "自分の申請",
+      }),
+    ).toHaveAttribute("aria-selected", "true");
+
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All", "");
+    });
+
+    expect(mockedGetMyApprovalRequests).not.toHaveBeenCalled();
+  });
+
+  test("localStorageに不正な一覧タブが保存されている場合は自分の申請を表示すること", async () => {
+    mockedRoleStorage.get.mockReturnValue("Approver");
+    mockedGetApplications.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
+
+    localStorage.setItem("applicationListView", "unknown");
+
+    renderComponent();
+
+    expect(
+      screen.getByRole("tab", {
+        name: "自分の申請",
+      }),
+    ).toHaveAttribute("aria-selected", "true");
+
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledWith(1, 10, "All", "");
+    });
+  });
+
+  test("承認待ちタブでも検索欄を表示すること", async () => {
+    const user = userEvent.setup();
+
+    mockedRoleStorage.get.mockReturnValue("Approver");
+
+    const emptyResponse = {
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0,
+    };
+
+    mockedGetApplications.mockResolvedValue(emptyResponse);
+    mockedGetMyApprovalRequests.mockResolvedValue(emptyResponse);
+
+    renderComponent();
+
+    await user.click(
+      screen.getByRole("tab", {
+        name: "承認待ち",
+      }),
+    );
+
+    expect(
+      screen.getByRole("searchbox", {
+        name: "タイトル・申請者名で検索",
+      }),
+    ).toBeInTheDocument();
   });
 });
