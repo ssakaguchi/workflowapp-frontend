@@ -129,9 +129,9 @@ export function ApplicationListPage() {
           </Tabs>
         )}
         <Stack
-          direction="row"
+          direction={{ xs: "column", md: "row" }}
           spacing="10px"
-          alignItems="flex-start"
+          alignItems={{ xs: "stretch", md: "flex-start" }}
           sx={{ mt: 2, mb: 4 }}
         >
           {listView === "myApplications" && (
@@ -150,7 +150,11 @@ export function ApplicationListPage() {
             sx={{ width: { xs: "100%", sm: 360 } }}
           />
 
-          <Box flexGrow="1" />
+          <Box
+            sx={{
+              flexGrow: { xs: 0, md: 1 },
+            }}
+          />
 
           {listView === "myApplications" && (
             <Button
