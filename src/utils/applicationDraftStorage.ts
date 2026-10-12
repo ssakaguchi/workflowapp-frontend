@@ -1,7 +1,10 @@
 import type { DefaultValues } from "react-hook-form";
 
 import type { ApplicationCreateFormValues } from "../schemas/applicationCreateSchema";
-import { applicationDraftSchema } from "../schemas/applicationDraftSchema";
+import {
+  type ApplicationDraft,
+  applicationDraftSchema,
+} from "../schemas/applicationDraftSchema";
 
 const APPLICATION_DRAFT_KEY = "applicationDraft";
 
@@ -33,7 +36,7 @@ export const applicationDraftStorage = {
     }
   },
 
-  set(draft: DefaultValues<ApplicationCreateFormValues>): void {
+  set(draft: ApplicationDraft): void {
     localStorage.setItem(APPLICATION_DRAFT_KEY, JSON.stringify(draft));
   },
 
