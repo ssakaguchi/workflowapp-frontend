@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
@@ -30,6 +30,7 @@ export default function ApplicationCreatePage() {
     control,
     handleSubmit,
     reset,
+    getValues,
     formState: { errors },
   } = useForm<ApplicationCreateFormValues>({
     resolver: zodResolver(applicationCreateSchema),
@@ -51,20 +52,6 @@ export default function ApplicationCreatePage() {
     name: "approverUserId",
   });
 
-  const latestDraftRef = useRef({
-    title,
-    content,
-    approverUserId,
-  });
-
-  latestDraftRef.current = {
-    title,
-    content,
-    approverUserId,
-  };
-
-  const shouldSaveDraftOnUnmountRef = useRef(true);
-
   const hasDraft =
     Boolean(title) || Boolean(content) || approverUserId !== undefined;
 
@@ -75,8 +62,6 @@ export default function ApplicationCreatePage() {
       applicationDraftStorage.remove();
       return;
     }
-
-    shouldSaveDraftOnUnmountRef.current = true;
 
     // 下書きを自動保存するためのタイマーを設定
     const timeoutId = setTimeout(() => {
@@ -94,11 +79,7 @@ export default function ApplicationCreatePage() {
 
   useEffect(() => {
     return () => {
-      if (!shouldSaveDraftOnUnmountRef.current) {
-        return;
-      }
-
-      const { title, content, approverUserId } = latestDraftRef.current;
+      const { title, content, approverUserId } = getValues();
 
       const isEmptyDraft = !title && !content && approverUserId === undefined;
 
@@ -112,7 +93,7 @@ export default function ApplicationCreatePage() {
         approverUserId,
       });
     };
-  }, []);
+  }, [getValues]);
 
   const onSubmit = async (values: ApplicationCreateFormValues) => {
     setErrorMessage("");
@@ -120,7 +101,12 @@ export default function ApplicationCreatePage() {
     try {
       await createApplicationMutation.mutateAsync(values);
 
-      shouldSaveDraftOnUnmountRef.current = false;
+      reset({
+        title: "",
+        content: "",
+        approverUserId: undefined,
+      });
+
       applicationDraftStorage.remove();
 
       updateChanges({
@@ -138,8 +124,6 @@ export default function ApplicationCreatePage() {
   };
 
   const handleDiscardDraft = () => {
-    shouldSaveDraftOnUnmountRef.current = false;
-
     applicationDraftStorage.remove();
 
     reset({
