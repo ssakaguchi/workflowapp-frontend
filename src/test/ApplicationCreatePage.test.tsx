@@ -1,4 +1,10 @@
-import { act, renderHook, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -28,6 +34,8 @@ describe("ApplicationCreatePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    localStorage.removeItem("applicationDraft");
+
     const { result, unmount } = renderHook(() => useNotificationStore());
 
     act(() => {
@@ -45,6 +53,7 @@ describe("ApplicationCreatePage", () => {
 
   // 各テスト後にモックを完全にリセットして、次のテストに影響を与えないようにする
   afterEach(() => {
+    vi.useRealTimers();
     vi.resetAllMocks();
   });
 
@@ -341,5 +350,421 @@ describe("ApplicationCreatePage", () => {
       content: "新規申請内容",
       approverUserId: 1,
     });
+  });
+
+  test("タイトルを入力すると下書きをlocalStorageに保存すること", async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    const titleInput = await screen.findByLabelText("タイトル");
+
+    await user.type(titleInput, "出張申請");
+
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "出張申請",
+          content: "",
+        }),
+      );
+    });
+  });
+
+  test("タイトルと内容を入力すると下書きをlocalStorageに保存すること", async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.type(await screen.findByLabelText("タイトル"), "出張申請");
+
+    await user.type(
+      screen.getByLabelText("内容"),
+      "東京への出張を申請します。",
+    );
+
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "出張申請",
+          content: "東京への出張を申請します。",
+        }),
+      );
+    });
+  });
+
+  test("localStorageに保存された下書きを初期表示時に復元すること", async () => {
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+      }),
+    );
+
+    renderComponent();
+
+    expect(await screen.findByLabelText("タイトル")).toHaveValue("出張申請");
+    expect(screen.getByLabelText("内容")).toHaveValue(
+      "東京への出張を申請します。",
+    );
+  });
+
+  test("localStorageの下書きが不正なJSONの場合は空のフォームを表示すること", async () => {
+    localStorage.setItem("applicationDraft", "{ invalid json");
+
+    renderComponent();
+
+    expect(await screen.findByLabelText("タイトル")).toHaveValue("");
+    expect(screen.getByLabelText("内容")).toHaveValue("");
+  });
+
+  test("申請の作成に成功した場合は下書きをlocalStorageから削除すること", async () => {
+    const user = userEvent.setup();
+
+    mockedCreateApplication.mockResolvedValue(undefined);
+
+    renderComponent();
+
+    await user.type(await screen.findByLabelText("タイトル"), "出張申請");
+
+    await user.type(
+      screen.getByLabelText("内容"),
+      "東京への出張を申請します。",
+    );
+
+    await user.click(screen.getByLabelText("承認者 *"));
+    await user.click(
+      screen.getByRole("option", {
+        name: "承認者ユーザー",
+      }),
+    );
+
+    // 下書きが保存されていることを事前に確認
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).not.toBeNull();
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "申請",
+      }),
+    );
+
+    expect(await screen.findByText("申請一覧")).toBeInTheDocument();
+
+    expect(localStorage.getItem("applicationDraft")).toBeNull();
+  });
+
+  test("申請の作成に失敗した場合は下書きをlocalStorageに残すこと", async () => {
+    const user = userEvent.setup();
+
+    mockedCreateApplication.mockRejectedValue(new Error("作成に失敗しました"));
+
+    renderComponent();
+
+    await user.type(await screen.findByLabelText("タイトル"), "出張申請");
+
+    await user.type(
+      screen.getByLabelText("内容"),
+      "東京への出張を申請します。",
+    );
+
+    await user.click(screen.getByLabelText("承認者 *"));
+    await user.click(
+      screen.getByRole("option", {
+        name: "承認者ユーザー",
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "申請",
+      }),
+    );
+
+    expect(
+      await screen.findByText("申請の作成に失敗しました。"),
+    ).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).not.toBeNull();
+    });
+  });
+
+  test("承認者を選択すると下書きに承認者IDを保存すること", async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(await screen.findByLabelText("承認者 *"));
+    await user.click(
+      screen.getByRole("option", {
+        name: "承認者ユーザー",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "",
+          content: "",
+          approverUserId: 1,
+        }),
+      );
+    });
+  });
+
+  test("localStorageに保存された承認者を初期表示時に復元すること", async () => {
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+        approverUserId: 1,
+      }),
+    );
+
+    renderComponent();
+
+    expect(await screen.findByLabelText("タイトル")).toHaveValue("出張申請");
+    expect(screen.getByLabelText("内容")).toHaveValue(
+      "東京への出張を申請します。",
+    );
+
+    expect(await screen.findByLabelText("承認者 *")).toHaveTextContent(
+      "承認者ユーザー",
+    );
+  });
+
+  test("下書きを破棄するとlocalStorageを削除してフォームを空にすること", async () => {
+    const user = userEvent.setup();
+
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+        approverUserId: 1,
+      }),
+    );
+
+    renderComponent();
+
+    expect(await screen.findByLabelText("タイトル")).toHaveValue("出張申請");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "下書きを破棄",
+      }),
+    );
+
+    expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+    expect(screen.getByLabelText("タイトル")).toHaveValue("");
+    expect(screen.getByLabelText("内容")).toHaveValue("");
+  });
+
+  test("下書きがない場合は下書きを破棄ボタンを表示しないこと", async () => {
+    renderComponent();
+
+    await screen.findByText("申請作成画面");
+
+    expect(
+      screen.queryByRole("button", {
+        name: "下書きを破棄",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("下書きがある場合は下書きを破棄ボタンを表示すること", async () => {
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+        approverUserId: 1,
+      }),
+    );
+
+    renderComponent();
+
+    expect(
+      await screen.findByRole("button", {
+        name: "下書きを破棄",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  test("下書きを破棄すると下書きを破棄ボタンが非表示になること", async () => {
+    const user = userEvent.setup();
+
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "出張申請",
+        content: "東京への出張を申請します。",
+        approverUserId: 1,
+      }),
+    );
+
+    renderComponent();
+
+    const discardButton = await screen.findByRole("button", {
+      name: "下書きを破棄",
+    });
+
+    await user.click(discardButton);
+
+    expect(
+      screen.queryByRole("button", {
+        name: "下書きを破棄",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("入力直後には下書きを保存せず一定時間後に保存すること", async () => {
+    vi.useFakeTimers();
+
+    try {
+      renderComponent();
+
+      const titleInput = screen.getByLabelText("タイトル");
+
+      fireEvent.change(titleInput, {
+        target: {
+          value: "出張申請",
+        },
+      });
+
+      // 入力直後には保存されない
+      expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+      // 499msではまだ保存されない
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(499);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+      // さらに1ms経過すると保存される
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "出張申請",
+          content: "",
+        }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("入力が続いた場合は最後の入力から500ms後に下書きを保存すること", async () => {
+    vi.useFakeTimers();
+
+    try {
+      renderComponent();
+
+      const titleInput = screen.getByLabelText("タイトル");
+
+      // 最初の入力
+      fireEvent.change(titleInput, {
+        target: {
+          value: "出張",
+        },
+      });
+
+      // 400ms進める
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+      // 500ms経過する前にさらに入力
+      fireEvent.change(titleInput, {
+        target: {
+          value: "出張申請",
+        },
+      });
+
+      // 最初の入力からは500msを超えるが、
+      // 最後の入力からはまだ100msしか経っていない
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+      // 最後の入力から合計500msにする
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400);
+      });
+
+      expect(localStorage.getItem("applicationDraft")).toBe(
+        JSON.stringify({
+          title: "出張申請",
+          content: "",
+        }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("入力後500ms以内に画面を離れても最新の下書きを保存すること", () => {
+    const { unmount } = renderComponent();
+
+    fireEvent.change(screen.getByLabelText("タイトル"), {
+      target: { value: "出張申請" },
+    });
+
+    // debounceによる保存はまだ実行されていない
+    expect(localStorage.getItem("applicationDraft")).toBeNull();
+
+    // 500ms経過前にアンマウント
+    unmount();
+
+    expect(localStorage.getItem("applicationDraft")).toBe(
+      JSON.stringify({
+        title: "出張申請",
+        content: "",
+      }),
+    );
+  });
+
+  test("下書きを破棄したあと再入力すると画面離脱時に新しい下書きを保存すること", () => {
+    localStorage.setItem(
+      "applicationDraft",
+      JSON.stringify({
+        title: "古い下書き",
+        content: "",
+      }),
+    );
+
+    const { unmount } = renderComponent();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "下書きを破棄",
+      }),
+    );
+
+    fireEvent.change(screen.getByLabelText("タイトル"), {
+      target: { value: "新しい下書き" },
+    });
+
+    unmount();
+
+    expect(localStorage.getItem("applicationDraft")).toBe(
+      JSON.stringify({
+        title: "新しい下書き",
+        content: "",
+      }),
+    );
   });
 });

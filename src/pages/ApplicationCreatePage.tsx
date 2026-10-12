@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Container, Stack, TextField, Typography } from "@mui/material";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import ApproverSelectBox from "../components/users/ApproverSelectBox";
@@ -12,6 +12,7 @@ import {
   applicationCreateSchema,
 } from "../schemas/applicationCreateSchema";
 import { useNotificationStore } from "../stores/notificationStore";
+import { applicationDraftStorage } from "../utils/applicationDraftStorage";
 
 export default function ApplicationCreatePage() {
   const navigate = useNavigate();
@@ -22,20 +23,77 @@ export default function ApplicationCreatePage() {
     ? "承認者一覧の取得に失敗しました。"
     : "";
   const createApplicationMutation = useCreateApplication();
+  const defaultValues = applicationDraftStorage.get();
 
   const {
     register,
     control,
     handleSubmit,
+    reset,
+    getValues,
     formState: { errors },
   } = useForm<ApplicationCreateFormValues>({
     resolver: zodResolver(applicationCreateSchema),
-    defaultValues: {
-      title: "",
-      content: "",
-      approverUserId: undefined,
-    },
+    defaultValues,
   });
+
+  const title = useWatch({
+    control,
+    name: "title",
+  });
+
+  const content = useWatch({
+    control,
+    name: "content",
+  });
+
+  const approverUserId = useWatch({
+    control,
+    name: "approverUserId",
+  });
+
+  const hasDraft =
+    Boolean(title) || Boolean(content) || approverUserId !== undefined;
+
+  useEffect(() => {
+    const isEmptyDraft = !title && !content && approverUserId === undefined;
+
+    if (isEmptyDraft) {
+      applicationDraftStorage.remove();
+      return;
+    }
+
+    // 下書きを自動保存するためのタイマーを設定
+    const timeoutId = setTimeout(() => {
+      applicationDraftStorage.set({
+        title,
+        content,
+        approverUserId,
+      });
+    }, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [title, content, approverUserId]);
+
+  useEffect(() => {
+    return () => {
+      const { title, content, approverUserId } = getValues();
+
+      const isEmptyDraft = !title && !content && approverUserId === undefined;
+
+      if (isEmptyDraft) {
+        return;
+      }
+
+      applicationDraftStorage.set({
+        title,
+        content,
+        approverUserId,
+      });
+    };
+  }, [getValues]);
 
   const onSubmit = async (values: ApplicationCreateFormValues) => {
     setErrorMessage("");
@@ -43,11 +101,18 @@ export default function ApplicationCreatePage() {
     try {
       await createApplicationMutation.mutateAsync(values);
 
+      reset({
+        title: "",
+        content: "",
+        approverUserId: undefined,
+      });
+
+      applicationDraftStorage.remove();
+
       updateChanges({
         message: "申請を作成しました。",
         severity: "success",
       });
-
       navigate(`/applications`);
     } catch {
       setErrorMessage("申請の作成に失敗しました。");
@@ -56,6 +121,16 @@ export default function ApplicationCreatePage() {
 
   const onInvalid = () => {
     setErrorMessage("");
+  };
+
+  const handleDiscardDraft = () => {
+    applicationDraftStorage.remove();
+
+    reset({
+      title: "",
+      content: "",
+      approverUserId: undefined,
+    });
   };
 
   return (
@@ -78,6 +153,16 @@ export default function ApplicationCreatePage() {
         >
           一覧へ戻る
         </Button>
+        {hasDraft && (
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={handleDiscardDraft}
+            disabled={createApplicationMutation.isPending}
+          >
+            下書きを破棄
+          </Button>
+        )}
       </Stack>
 
       <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
