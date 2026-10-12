@@ -117,6 +117,7 @@ export function useApplications() {
     setListView(value);
     setPage(1);
     setSelectedStatus("All");
+    applicationStatusFilterStorage.set("All");
   };
 
   const clearOperationError = () => {
